@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.png" alt="Claude Code Statusline Editor" width="560">
+  <img src="docs/logo-banner.png" alt="Claude Code Statusline Editor" width="560">
 </p>
 
 Visual editor for the [Claude Code status line](https://code.claude.com/docs/en/statusline.md).
