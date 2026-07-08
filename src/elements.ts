@@ -1,5 +1,6 @@
 import type { ElementConfig, ElementDef, ElementType } from './types'
 import { MOCK } from './mock'
+import { BAR_SOURCES, barCells, buildBarSetup } from './bar'
 
 const basename = (p: string) => p.split('/').filter(Boolean).pop() ?? p
 
@@ -14,9 +15,14 @@ const fmtDuration = (ms: number) => {
 
 const fmtTokens = (t: number) => (t >= 1000 ? `${Math.round(t / 1000)}k` : `${t}`)
 
-const bar = (pct: number, width = 10) => {
-  const filled = Math.round((pct / 100) * width)
-  return '█'.repeat(filled) + '░'.repeat(width - filled)
+const barPreview = (pct: number) => (c: ElementConfig) =>
+  barCells(pct, c)
+    .map((cell) => cell.ch)
+    .join('')
+
+const barEmit = (type: ElementType) => (c: ElementConfig) => {
+  const src = BAR_SOURCES[type]!
+  return buildBarSetup(c, src.source, src.keyBase)
 }
 
 export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
@@ -140,17 +146,29 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   'context-bar': {
     type: 'context-bar',
     label: 'Context bar',
-    hint: 'Context usage as a block gauge',
+    hint: 'Context usage gauge (style, width, gradient in inspector)',
     category: 'usage',
     defaults: { color: 'cyan' },
-    preview: () => bar(MOCK.context_window.used_percentage),
-    emit: () => ({
-      setup: [
-        `_pct=$(j '.context_window.used_percentage // 0 | round'); _fill=$(( _pct / 10 ))`,
-        `seg_cbar=""; for ((i=0;i<10;i++)); do if (( i < _fill )); then seg_cbar+="█"; else seg_cbar+="░"; fi; done`,
-      ],
-      value: '${seg_cbar}',
-    }),
+    preview: barPreview(MOCK.context_window.used_percentage),
+    emit: barEmit('context-bar'),
+  },
+  'rate-5h-bar': {
+    type: 'rate-5h-bar',
+    label: '5h usage bar',
+    hint: '5-hour rate limit gauge (subscribers)',
+    category: 'usage',
+    defaults: { color: 'yellow' },
+    preview: barPreview(MOCK.rate_limits.five_hour.used_percentage),
+    emit: barEmit('rate-5h-bar'),
+  },
+  'rate-7d-bar': {
+    type: 'rate-7d-bar',
+    label: '7d usage bar',
+    hint: '7-day rate limit gauge (subscribers)',
+    category: 'usage',
+    defaults: { color: 'magenta' },
+    preview: barPreview(MOCK.rate_limits.seven_day.used_percentage),
+    emit: barEmit('rate-7d-bar'),
   },
   tokens: {
     type: 'tokens',
@@ -217,13 +235,25 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   'rate-5h': {
     type: 'rate-5h',
     label: '5h limit',
-    hint: 'Rate limit window used (subscribers)',
+    hint: '5-hour window used % (subscribers)',
     category: 'usage',
     defaults: { color: 'bright-black', suffix: '% used' },
     preview: () => `${Math.round(MOCK.rate_limits.five_hour.used_percentage)}`,
     emit: () => ({
       setup: [`seg_rate5="$(j '.rate_limits.five_hour.used_percentage // 0 | round')"`],
       value: '${seg_rate5}',
+    }),
+  },
+  'rate-7d': {
+    type: 'rate-7d',
+    label: '7d limit',
+    hint: '7-day window used % (subscribers)',
+    category: 'usage',
+    defaults: { color: 'bright-black', suffix: '% used' },
+    preview: () => `${Math.round(MOCK.rate_limits.seven_day.used_percentage)}`,
+    emit: () => ({
+      setup: [`seg_rate7="$(j '.rate_limits.seven_day.used_percentage // 0 | round')"`],
+      value: '${seg_rate7}',
     }),
   },
   time: {
@@ -265,6 +295,9 @@ export const DEFAULT_CONFIG: ElementConfig = {
   prefix: '',
   suffix: '',
   extra: '',
+  barStyle: 'blocks',
+  barWidth: 10,
+  barColorMode: 'solid',
 }
 
 let counter = 0

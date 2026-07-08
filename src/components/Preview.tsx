@@ -2,6 +2,13 @@ import type { ElementInstance } from '../types'
 import { ELEMENT_DEFS } from '../elements'
 import { ANSI_HEX } from '../mock'
 import { MOCK } from '../mock'
+import { BAR_TYPES, barCells } from '../bar'
+
+const BAR_MOCK_PCT: Record<string, number> = {
+  'context-bar': MOCK.context_window.used_percentage,
+  'rate-5h-bar': MOCK.rate_limits.five_hour.used_percentage,
+  'rate-7d-bar': MOCK.rate_limits.seven_day.used_percentage,
+}
 
 function Segment({ el }: { el: ElementInstance }) {
   const def = ELEMENT_DEFS[el.type]
@@ -9,6 +16,20 @@ function Segment({ el }: { el: ElementInstance }) {
     color: ANSI_HEX[el.config.color],
     fontWeight: el.config.bold ? 700 : 400,
     opacity: el.config.dim ? 0.55 : 1,
+  }
+  if (BAR_TYPES.has(el.type)) {
+    const cells = barCells(BAR_MOCK_PCT[el.type] ?? 0, el.config)
+    return (
+      <span style={style}>
+        {el.config.prefix}
+        {cells.map((cell, i) => (
+          <span key={i} style={cell.color ? { color: cell.color } : undefined}>
+            {cell.ch}
+          </span>
+        ))}
+        {el.config.suffix}
+      </span>
+    )
   }
   if (el.type === 'lines-changed') {
     return (

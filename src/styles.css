@@ -495,6 +495,31 @@ input {
   background: rgba(217, 168, 84, 0.08);
 }
 
+.bar-style-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.bar-style-btn {
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--ink-dim);
+  letter-spacing: 0.05em;
+}
+
+.bar-style-btn.active,
+.bar-style-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.field-range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .glyph-row {
   display: flex;
   flex-wrap: wrap;

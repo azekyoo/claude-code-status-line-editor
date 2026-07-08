@@ -46,17 +46,21 @@ export function generateScript(doc: Doc): string {
     '',
   ]
 
-  // Setup blocks, deduped by element type across all rows.
-  const seenTypes = new Set<ElementType>()
+  // Setup blocks, deduped by content: bar variables embed their config, so
+  // two bars with different settings emit distinct blocks while identical
+  // segments share one.
+  const seenBlocks = new Set<string>()
   for (const row of doc.rows) {
     for (const el of row) {
-      if (seenTypes.has(el.type)) continue
-      seenTypes.add(el.type)
       const setup = ELEMENT_DEFS[el.type].emit(el.config).setup
+      if (setup.length === 0) continue
+      const block = setup.join('\n')
+      if (seenBlocks.has(block)) continue
+      seenBlocks.add(block)
       lines.push(...setup)
     }
   }
-  if (seenTypes.size > 0) lines.push('')
+  if (seenBlocks.size > 0) lines.push('')
 
   doc.rows.forEach((row, i) => {
     const v = `line${i + 1}`

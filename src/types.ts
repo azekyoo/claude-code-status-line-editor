@@ -17,6 +17,10 @@ export type AnsiColor =
   | 'bright-cyan'
   | 'bright-white'
 
+export type BarStyle = 'blocks' | 'shade' | 'segments' | 'dots' | 'thin' | 'ascii'
+
+export type BarColorMode = 'solid' | 'threshold' | 'gradient'
+
 export type ElementType =
   | 'model'
   | 'cwd-basename'
@@ -34,6 +38,9 @@ export type ElementType =
   | 'session-name'
   | 'vim-mode'
   | 'rate-5h'
+  | 'rate-7d'
+  | 'rate-5h-bar'
+  | 'rate-7d-bar'
   | 'time'
   | 'text'
   | 'sep'
@@ -46,6 +53,10 @@ export interface ElementConfig {
   suffix: string
   /** free-form payload: content for `text`, glyph for `sep` */
   extra: string
+  /** bar elements only */
+  barStyle: BarStyle
+  barWidth: number
+  barColorMode: BarColorMode
 }
 
 export interface ElementInstance {
