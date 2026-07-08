@@ -347,6 +347,12 @@ export const DEFAULT_CONFIG: ElementConfig = {
 }
 
 let counter = 0
+
+/** keep the id counter ahead of ids restored from storage so new instances never collide */
+export function seedIdCounter(n: number) {
+  counter = Math.max(counter, n)
+}
+
 export function makeInstance(type: ElementType) {
   const def = ELEMENT_DEFS[type]
   return {

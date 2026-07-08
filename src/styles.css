@@ -356,6 +356,11 @@ input {
   margin-bottom: 12px;
 }
 
+.canvas-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .canvas-row-wrap {
   display: flex;
   align-items: center;

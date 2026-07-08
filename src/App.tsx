@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -11,12 +11,43 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import type { ElementConfig, ElementInstance, ElementType } from './types'
-import { ELEMENT_DEFS, makeInstance } from './elements'
+import { DEFAULT_CONFIG, ELEMENT_DEFS, makeInstance, seedIdCounter } from './elements'
 import Palette from './components/Palette'
 import Preview from './components/Preview'
 import Inspector from './components/Inspector'
 import ExportPanel from './components/ExportPanel'
 import { Row } from './components/Canvas'
+
+const STORAGE_KEY = 'ccse-doc-v1'
+
+/** restore the saved document; tolerates unknown types and missing config
+ *  fields from older versions (merged over DEFAULT_CONFIG) */
+function loadRows(): ElementInstance[][] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+    let maxId = 0
+    const rows = parsed.map((row) =>
+      (Array.isArray(row) ? row : [])
+        .filter(
+          (e): e is ElementInstance =>
+            !!e && typeof e === 'object' && (e as ElementInstance).type in ELEMENT_DEFS,
+        )
+        .map((e) => {
+          const m = /^el-(\d+)-/.exec(typeof e.id === 'string' ? e.id : '')
+          if (m) maxId = Math.max(maxId, Number(m[1]))
+          const id = m ? e.id : `el-${++maxId}-${e.type}`
+          return { id, type: e.type, config: { ...DEFAULT_CONFIG, ...(e.config ?? {}) } }
+        }),
+    )
+    seedIdCounter(maxId)
+    return rows.some((r) => r.length > 0) ? rows : null
+  } catch {
+    return null
+  }
+}
 
 function defaultRows(): ElementInstance[][] {
   const sep = () => {
@@ -46,9 +77,23 @@ function defaultRows(): ElementInstance[][] {
 }
 
 export default function App() {
-  const [rows, setRows] = useState<ElementInstance[][]>(defaultRows)
+  const [rows, setRows] = useState<ElementInstance[][]>(() => loadRows() ?? defaultRows())
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
+    } catch {
+      // storage full or unavailable — autosave is best-effort
+    }
+  }, [rows])
+
+  const resetDoc = () => {
+    if (!window.confirm('Reset the status line to the default template?')) return
+    setRows(defaultRows())
+    setSelectedId(null)
+  }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -193,9 +238,14 @@ export default function App() {
             <section className="canvas">
               <div className="canvas-head">
                 <h2 className="panel-title">Lines</h2>
-                <button className="ghost-btn" onClick={addRow}>
-                  + add line
-                </button>
+                <div className="canvas-actions">
+                  <button className="ghost-btn" onClick={resetDoc} title="restore default template">
+                    reset
+                  </button>
+                  <button className="ghost-btn" onClick={addRow}>
+                    + add line
+                  </button>
+                </div>
               </div>
               {rows.map((row, i) => (
                 <Row
