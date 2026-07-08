@@ -19,16 +19,27 @@ import ExportPanel from './components/ExportPanel'
 import { Row } from './components/Canvas'
 
 function defaultRows(): ElementInstance[][] {
-  const sep1 = makeInstance('sep')
-  const sep2 = makeInstance('sep')
+  const sep = () => {
+    const s = makeInstance('sep')
+    s.config.prefix = ' '
+    s.config.suffix = ' '
+    return s
+  }
+  const bar = makeInstance('context-bar')
+  bar.config.barColorMode = 'gradient'
+  bar.config.barWidth = 12
+  const pct = makeInstance('context-pct')
+  pct.config.prefix = ' '
   return [
     [
       makeInstance('model'),
-      sep1,
+      sep(),
       makeInstance('cwd-basename'),
       makeInstance('git-branch'),
-      sep2,
-      makeInstance('context-pct'),
+      sep(),
+      bar,
+      pct,
+      sep(),
       makeInstance('cost'),
     ],
   ]

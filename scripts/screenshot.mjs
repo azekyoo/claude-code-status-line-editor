@@ -5,16 +5,8 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 940 }, dev
 await page.goto('http://localhost:5173/', { waitUntil: 'networkidle' })
 await page.waitForTimeout(800) // fonts
 
-// add a context bar (click-to-add auto-selects it in the inspector)
-await page.click('button.palette-item:has-text("Context bar")')
-await page.waitForTimeout(200)
-
-// switch its fill mode to gradient
-await page.click('aside.inspector button.toggle:has-text("gradient")')
-await page.waitForTimeout(200)
-
-// widen it a touch so the ramp reads well
-await page.locator('aside.inspector input.field-range').fill('16')
+// select the default gradient context bar so the inspector shows its settings
+await page.click('.canvas-row .chip:has-text("Context bar")')
 await page.waitForTimeout(300)
 
 await page.screenshot({ path: process.argv[2] ?? 'screenshot.png' })
