@@ -1,7 +1,11 @@
-# Claude Code Statusline Editor
+<p align="center">
+  <img src="docs/logo.png" alt="Claude Code Statusline Editor" width="560">
+</p>
 
 Visual editor for the [Claude Code status line](https://code.claude.com/docs/en/statusline.md).
 Drag elements onto a live terminal preview, style them, export a ready-to-use `statusline.sh`.
+
+**Try it live: [azekyo.com/claude-code-status-line-editor](https://azekyo.com/claude-code-status-line-editor/)**
 
 ![Claude Code Statusline Editor — context bar with gradient fill selected in the inspector](docs/screenshot.png)
 

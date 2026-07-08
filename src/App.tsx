@@ -13,6 +13,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import type { ElementConfig, ElementInstance, ElementType } from './types'
 import { DEFAULT_CONFIG, ELEMENT_DEFS, makeInstance, seedIdCounter } from './elements'
 import { docFromHash } from './share'
+import logoUrl from './assets/logo.png'
 import Palette from './components/Palette'
 import Preview from './components/Preview'
 import Inspector from './components/Inspector'
@@ -211,9 +212,9 @@ export default function App() {
       <header className="header">
         <div>
           <h1 className="brand">
-            Claude Code <em>Statusline Editor</em>
+            <img src={logoUrl} alt="Claude Code Statusline Editor" className="brand-logo" />
           </h1>
-          <p className="brand-sub">drag · style · export statusline.sh</p>
+          <p className="brand-sub">drag · style · export</p>
         </div>
         <div className="header-right">
           <span className="header-meta">stdin JSON → jq → ANSI → your terminal</span>
