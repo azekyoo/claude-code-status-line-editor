@@ -154,7 +154,7 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   },
   'rate-5h-bar': {
     type: 'rate-5h-bar',
-    label: '5h usage bar',
+    label: '5h bar',
     hint: '5-hour rate limit gauge (subscribers)',
     category: 'usage',
     defaults: { color: 'yellow' },
@@ -163,7 +163,7 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   },
   'rate-7d-bar': {
     type: 'rate-7d-bar',
-    label: '7d usage bar',
+    label: '7d bar',
     hint: '7-day rate limit gauge (subscribers)',
     category: 'usage',
     defaults: { color: 'magenta' },
