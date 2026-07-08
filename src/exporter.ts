@@ -5,12 +5,20 @@ import { hexToRgb } from './bar'
 
 /** Element types whose segment may legitimately be empty at runtime —
  *  wrap them in a guard so prefix/suffix don't print alone. */
-const OPTIONAL_TYPES = new Set<ElementType>(['git-branch', 'session-name', 'vim-mode'])
+const OPTIONAL_TYPES = new Set<ElementType>([
+  'git-branch',
+  'session-name',
+  'vim-mode',
+  'rate-5h-reset',
+  'rate-7d-reset',
+])
 
 const OPTIONAL_VAR: Partial<Record<ElementType, string>> = {
   'git-branch': 'seg_branch',
   'session-name': 'seg_sess',
   'vim-mode': 'seg_vim',
+  'rate-5h-reset': 'seg_r5rst',
+  'rate-7d-reset': 'seg_r7rst',
 }
 
 /** Escape a literal string for inclusion inside bash double quotes. */

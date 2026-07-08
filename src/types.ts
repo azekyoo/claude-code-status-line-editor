@@ -41,6 +41,8 @@ export type ElementType =
   | 'rate-7d'
   | 'rate-5h-bar'
   | 'rate-7d-bar'
+  | 'rate-5h-reset'
+  | 'rate-7d-reset'
   | 'time'
   | 'text'
   | 'sep'

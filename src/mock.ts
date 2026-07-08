@@ -24,8 +24,14 @@ export const MOCK = {
     remaining_percentage: 58,
   },
   rate_limits: {
-    five_hour: { used_percentage: 23.5 },
-    seven_day: { used_percentage: 41.2 },
+    five_hour: {
+      used_percentage: 23.5,
+      resets_at: Math.floor(Date.now() / 1000) + 2 * 3600 + 13 * 60,
+    },
+    seven_day: {
+      used_percentage: 41.2,
+      resets_at: Math.floor(Date.now() / 1000) + 3 * 86400 + 7 * 3600,
+    },
   },
   vim: { mode: 'NORMAL' },
   gitBranch: 'feat/element-palette',

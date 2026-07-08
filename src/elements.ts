@@ -25,6 +25,24 @@ const barEmit = (type: ElementType) => (c: ElementConfig) => {
   return buildBarSetup(c, src.source, src.keyBase)
 }
 
+const fmtUntil = (epoch: number) => {
+  const d = Math.max(0, epoch - Math.floor(Date.now() / 1000))
+  if (d >= 86400) return `${Math.floor(d / 86400)}d ${Math.floor((d % 86400) / 3600)}h`
+  if (d >= 3600) return `${Math.floor(d / 3600)}h ${Math.floor((d % 3600) / 60)}m`
+  return `${Math.floor(d / 60)}m`
+}
+
+/** countdown-to-reset setup shared by the 5h/7d reset elements */
+const resetSetup = (jqPath: string, v: string, t: string) => [
+  `${t}=$(j '${jqPath} // 0 | floor')`,
+  `if (( ${t} > 0 )); then`,
+  `  ${t}=$(( ${t} - $(date +%s) )); (( ${t} < 0 )) && ${t}=0`,
+  `  if (( ${t} >= 86400 )); then ${v}="$(( ${t} / 86400 ))d $(( (${t} % 86400) / 3600 ))h"`,
+  `  elif (( ${t} >= 3600 )); then ${v}="$(( ${t} / 3600 ))h $(( (${t} % 3600) / 60 ))m"`,
+  `  else ${v}="$(( ${t} / 60 ))m"; fi`,
+  `else ${v}=""; fi`,
+]
+
 export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   model: {
     type: 'model',
@@ -254,6 +272,30 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
     emit: () => ({
       setup: [`seg_rate7="$(j '.rate_limits.seven_day.used_percentage // 0 | round')"`],
       value: '${seg_rate7}',
+    }),
+  },
+  'rate-5h-reset': {
+    type: 'rate-5h-reset',
+    label: '5h reset',
+    hint: 'Time until the 5-hour window resets',
+    category: 'usage',
+    defaults: { color: 'bright-black', prefix: 'resets ' },
+    preview: () => fmtUntil(MOCK.rate_limits.five_hour.resets_at),
+    emit: () => ({
+      setup: resetSetup('.rate_limits.five_hour.resets_at', 'seg_r5rst', '_t5'),
+      value: '${seg_r5rst}',
+    }),
+  },
+  'rate-7d-reset': {
+    type: 'rate-7d-reset',
+    label: '7d reset',
+    hint: 'Time until the 7-day window resets',
+    category: 'usage',
+    defaults: { color: 'bright-black', prefix: 'resets ' },
+    preview: () => fmtUntil(MOCK.rate_limits.seven_day.resets_at),
+    emit: () => ({
+      setup: resetSetup('.rate_limits.seven_day.resets_at', 'seg_r7rst', '_t7'),
+      value: '${seg_r7rst}',
     }),
   },
   time: {
