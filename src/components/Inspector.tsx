@@ -156,8 +156,23 @@ export default function Inspector({
               title={c}
             />
           ))}
+          <label
+            className={`color-cell color-cell-custom${el.config.color === 'custom' ? ' active' : ''}`}
+            style={el.config.color === 'custom' ? { background: el.config.customColor } : undefined}
+            title="custom color"
+          >
+            <input
+              type="color"
+              className="color-cell-input"
+              value={el.config.customColor}
+              onClick={() => set({ color: 'custom' })}
+              onChange={(e) => set({ color: 'custom', customColor: e.target.value })}
+            />
+          </label>
         </div>
-        <span className="color-name">{el.config.color}</span>
+        <span className="color-name">
+          {el.config.color === 'custom' ? `custom ${el.config.customColor}` : el.config.color}
+        </span>
       </div>
 
       <div className="field field-inline">

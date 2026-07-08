@@ -1,7 +1,6 @@
 import type { ElementInstance } from '../types'
 import { ELEMENT_DEFS } from '../elements'
-import { ANSI_HEX } from '../mock'
-import { MOCK } from '../mock'
+import { ANSI_HEX, configHex, MOCK } from '../mock'
 import { BAR_TYPES, barCells } from '../bar'
 
 const BAR_MOCK_PCT: Record<string, number> = {
@@ -13,7 +12,7 @@ const BAR_MOCK_PCT: Record<string, number> = {
 function Segment({ el }: { el: ElementInstance }) {
   const def = ELEMENT_DEFS[el.type]
   const style: React.CSSProperties = {
-    color: ANSI_HEX[el.config.color],
+    color: configHex(el.config),
     fontWeight: el.config.bold ? 700 : 400,
     opacity: el.config.dim ? 0.55 : 1,
   }

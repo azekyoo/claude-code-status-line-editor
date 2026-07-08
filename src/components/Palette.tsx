@@ -22,7 +22,8 @@ function PaletteItem({ type, onAdd }: { type: ElementType; onAdd: (t: ElementTyp
     }
     onAdd(type)
   }
-  const accent = ANSI_HEX[def.defaults.color ?? 'default']
+  const dc = def.defaults.color
+  const accent = ANSI_HEX[dc && dc !== 'custom' ? dc : 'default']
   return (
     <button
       ref={setNodeRef}

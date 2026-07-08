@@ -46,7 +46,9 @@ export type ElementType =
   | 'sep'
 
 export interface ElementConfig {
-  color: AnsiColor
+  color: AnsiColor | 'custom'
+  /** hex color used when color === 'custom' (24-bit ANSI in the script) */
+  customColor: string
   bold: boolean
   dim: boolean
   prefix: string

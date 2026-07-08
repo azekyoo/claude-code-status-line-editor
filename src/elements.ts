@@ -290,6 +290,7 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
 
 export const DEFAULT_CONFIG: ElementConfig = {
   color: 'default',
+  customColor: '#d9a854',
   bold: false,
   dim: false,
   prefix: '',

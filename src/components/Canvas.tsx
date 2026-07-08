@@ -3,7 +3,7 @@ import { SortableContext, useSortable, horizontalListSortingStrategy } from '@dn
 import { CSS } from '@dnd-kit/utilities'
 import type { ElementInstance } from '../types'
 import { ELEMENT_DEFS } from '../elements'
-import { ANSI_HEX } from '../mock'
+import { configHex } from '../mock'
 
 export function Chip({
   el,
@@ -38,7 +38,7 @@ export function Chip({
       {...attributes}
       {...listeners}
     >
-      <span className="chip-swatch" style={{ background: ANSI_HEX[el.config.color] }} />
+      <span className="chip-swatch" style={{ background: configHex(el.config) }} />
       <span className="chip-label">{isGlyph ? el.config.extra || def.label : def.label}</span>
       <button
         className="chip-x"

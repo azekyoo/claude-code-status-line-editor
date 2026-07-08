@@ -1,4 +1,4 @@
-import type { AnsiColor } from './types'
+import type { AnsiColor, ElementConfig } from './types'
 
 /** Mock stdin payload used to drive the live preview (mirrors real schema). */
 export const MOCK = {
@@ -72,6 +72,10 @@ export const ANSI_FG_CODE: Record<AnsiColor, string> = {
   'bright-cyan': '96',
   'bright-white': '97',
 }
+
+/** display hex for an element's configured color (ANSI or custom) */
+export const configHex = (c: ElementConfig): string =>
+  c.color === 'custom' ? c.customColor : ANSI_HEX[c.color]
 
 export const ANSI_ORDER: AnsiColor[] = [
   'default',

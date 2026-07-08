@@ -1,6 +1,7 @@
 import type { Doc, ElementInstance, ElementType } from './types'
 import { ELEMENT_DEFS } from './elements'
 import { ANSI_FG_CODE } from './mock'
+import { hexToRgb } from './bar'
 
 /** Element types whose segment may legitimately be empty at runtime —
  *  wrap them in a guard so prefix/suffix don't print alone. */
@@ -19,7 +20,10 @@ function sgrCodes(el: ElementInstance): string {
   const codes: string[] = []
   if (el.config.bold) codes.push('1')
   if (el.config.dim) codes.push('2')
-  const fg = ANSI_FG_CODE[el.config.color]
+  const fg =
+    el.config.color === 'custom'
+      ? `38;2;${hexToRgb(el.config.customColor).join(';')}`
+      : ANSI_FG_CODE[el.config.color]
   if (fg) codes.push(fg)
   return codes.join(';')
 }
