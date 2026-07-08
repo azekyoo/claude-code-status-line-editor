@@ -13,6 +13,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "react": "^19.1.0",
+    "react-colorful": "^5.7.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {

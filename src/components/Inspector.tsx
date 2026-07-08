@@ -1,34 +1,39 @@
+import { useEffect, useState } from 'react'
 import type { AnsiColor, ElementConfig, ElementInstance } from '../types'
 import { ELEMENT_DEFS, SEP_GLYPHS } from '../elements'
 import { ANSI_HEX, ANSI_ORDER } from '../mock'
 import { BAR_COLOR_MODES, BAR_GLYPHS, BAR_STYLES, BAR_TYPES } from '../bar'
 import { NO_TEXT_GRADIENT } from '../exporter'
+import ColorPopover from './ColorPopover'
+
+type PickKey = 'customColor' | 'barLow' | 'barMid' | 'barHigh'
+type PickerState = { key: PickKey; x: number; y: number } | null
 
 function StopsEditor({
   el,
-  set,
   labels,
   showRamp,
+  onPick,
 }: {
   el: ElementInstance
-  set: (patch: Partial<ElementConfig>) => void
   labels: [string, string, string]
   showRamp: boolean
+  onPick: (key: PickKey, e: React.MouseEvent) => void
 }) {
   const keys = ['barLow', 'barMid', 'barHigh'] as const
   return (
     <>
       <div className="stop-row">
         {keys.map((k, i) => (
-          <label key={k} className="stop-item">
-            <input
-              type="color"
+          <div key={k} className="stop-item">
+            <button
               className="stop-input"
-              value={el.config[k]}
-              onChange={(e) => set({ [k]: e.target.value })}
+              style={{ background: el.config[k] }}
+              onClick={(e) => onPick(k, e)}
+              title={el.config[k]}
             />
             <span className="stop-label">{labels[i]}</span>
-          </label>
+          </div>
         ))}
       </div>
       {showRamp && (
@@ -52,6 +57,9 @@ export default function Inspector({
   onChange: (id: string, patch: Partial<ElementConfig>) => void
   onRemove: (id: string) => void
 }) {
+  const [picker, setPicker] = useState<PickerState>(null)
+  const elId = el?.id
+  useEffect(() => setPicker(null), [elId])
   if (!el) {
     return (
       <aside className="inspector" onClick={(e) => e.stopPropagation()}>
@@ -67,6 +75,8 @@ export default function Inspector({
   const isBar = BAR_TYPES.has(el.type)
   const canTextGradient = !NO_TEXT_GRADIENT.has(el.type)
   const isTextGradient = canTextGradient && el.config.color === 'gradient'
+  const openPicker = (key: PickKey, e: React.MouseEvent) =>
+    setPicker({ key, x: e.clientX, y: e.clientY })
 
   return (
     <aside className="inspector" onClick={(e) => e.stopPropagation()}>
@@ -150,13 +160,13 @@ export default function Inspector({
               </label>
               <StopsEditor
                 el={el}
-                set={set}
                 labels={
                   el.config.barColorMode === 'threshold'
                     ? ['< 50%', '50–79%', '≥ 80%']
                     : ['start', 'middle', 'end']
                 }
                 showRamp={el.config.barColorMode === 'gradient'}
+                onPick={openPicker}
               />
             </div>
           )}
@@ -191,7 +201,7 @@ export default function Inspector({
         )}
         {isTextGradient ? (
           <>
-            <StopsEditor el={el} set={set} labels={['start', 'middle', 'end']} showRamp />
+            <StopsEditor el={el} labels={['start', 'middle', 'end']} showRamp onPick={openPicker} />
             <span className="color-name">gradient across text (truecolor)</span>
           </>
         ) : (
@@ -206,21 +216,17 @@ export default function Inspector({
                   title={c}
                 />
               ))}
-              <label
+              <button
                 className={`color-cell color-cell-custom${el.config.color === 'custom' ? ' active' : ''}`}
                 style={
                   el.config.color === 'custom' ? { background: el.config.customColor } : undefined
                 }
                 title="custom color"
-              >
-                <input
-                  type="color"
-                  className="color-cell-input"
-                  value={el.config.customColor}
-                  onClick={() => set({ color: 'custom' })}
-                  onChange={(e) => set({ color: 'custom', customColor: e.target.value })}
-                />
-              </label>
+                onClick={(e) => {
+                  set({ color: 'custom' })
+                  openPicker('customColor', e)
+                }}
+              />
             </div>
             <span className="color-name">
               {el.config.color === 'custom' ? `custom ${el.config.customColor}` : el.config.color}
@@ -266,6 +272,16 @@ export default function Inspector({
       <button className="danger-btn" onClick={() => onRemove(el.id)}>
         remove element
       </button>
+
+      {picker && (
+        <ColorPopover
+          x={picker.x}
+          y={picker.y}
+          value={el.config[picker.key]}
+          onChange={(hex) => set({ [picker.key]: hex })}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </aside>
   )
 }
