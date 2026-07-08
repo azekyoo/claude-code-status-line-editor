@@ -83,6 +83,9 @@ export const ANSI_FG_CODE: Record<AnsiColor, string> = {
 export const configHex = (c: ElementConfig): string =>
   c.color === 'custom' ? c.customColor : c.color === 'gradient' ? c.barMid : ANSI_HEX[c.color]
 
+/** grid display order: 'white' is omitted (visually identical to 'default',
+ *  which emits no color code and follows the terminal theme) so the custom
+ *  picker completes a clean 8×2 grid */
 export const ANSI_ORDER: AnsiColor[] = [
   'default',
   'red',
@@ -91,7 +94,6 @@ export const ANSI_ORDER: AnsiColor[] = [
   'blue',
   'magenta',
   'cyan',
-  'white',
   'bright-black',
   'bright-red',
   'bright-green',
