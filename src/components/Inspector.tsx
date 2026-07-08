@@ -171,51 +171,61 @@ export default function Inspector({
               : 'Color (prefix/suffix only)'
             : 'Color'}
         </label>
-        <div className="color-grid">
-          {ANSI_ORDER.map((c: AnsiColor) => (
+        {canTextGradient && (
+          <div className="field-inline mode-row">
             <button
-              key={c}
-              className={`color-cell${el.config.color === c ? ' active' : ''}`}
-              style={{ background: ANSI_HEX[c] }}
-              onClick={() => set({ color: c })}
-              title={c}
-            />
-          ))}
-          <label
-            className={`color-cell color-cell-custom${el.config.color === 'custom' ? ' active' : ''}`}
-            style={el.config.color === 'custom' ? { background: el.config.customColor } : undefined}
-            title="custom color"
-          >
-            <input
-              type="color"
-              className="color-cell-input"
-              value={el.config.customColor}
-              onClick={() => set({ color: 'custom' })}
-              onChange={(e) => set({ color: 'custom', customColor: e.target.value })}
-            />
-          </label>
-          {canTextGradient && (
+              className={`toggle${!isTextGradient ? ' on' : ''}`}
+              onClick={() => el.config.color === 'gradient' && set({ color: 'default' })}
+              title="single color"
+            >
+              solid
+            </button>
             <button
-              className={`color-cell color-cell-gradient${isTextGradient ? ' active' : ''}`}
-              style={{
-                background: `linear-gradient(135deg, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`,
-              }}
+              className={`toggle${isTextGradient ? ' on' : ''}`}
               onClick={() => set({ color: 'gradient' })}
-              title="gradient across the text"
-            />
-          )}
-        </div>
-        <span className="color-name">
-          {el.config.color === 'custom'
-            ? `custom ${el.config.customColor}`
-            : isTextGradient
-              ? 'gradient across text (truecolor)'
-              : el.config.color}
-        </span>
-        {isTextGradient && (
-          <div className="text-gradient-stops">
-            <StopsEditor el={el} set={set} labels={['start', 'middle', 'end']} showRamp />
+              title="per-character ramp across the text (truecolor)"
+            >
+              gradient
+            </button>
           </div>
+        )}
+        {isTextGradient ? (
+          <>
+            <StopsEditor el={el} set={set} labels={['start', 'middle', 'end']} showRamp />
+            <span className="color-name">gradient across text (truecolor)</span>
+          </>
+        ) : (
+          <>
+            <div className="color-grid">
+              {ANSI_ORDER.map((c: AnsiColor) => (
+                <button
+                  key={c}
+                  className={`color-cell${el.config.color === c ? ' active' : ''}`}
+                  style={{ background: ANSI_HEX[c] }}
+                  onClick={() => set({ color: c })}
+                  title={c}
+                />
+              ))}
+              <label
+                className={`color-cell color-cell-custom${el.config.color === 'custom' ? ' active' : ''}`}
+                style={
+                  el.config.color === 'custom' ? { background: el.config.customColor } : undefined
+                }
+                title="custom color"
+              >
+                <input
+                  type="color"
+                  className="color-cell-input"
+                  value={el.config.customColor}
+                  onClick={() => set({ color: 'custom' })}
+                  onChange={(e) => set({ color: 'custom', customColor: e.target.value })}
+                />
+              </label>
+            </div>
+            <span className="color-name">
+              {el.config.color === 'custom' ? `custom ${el.config.customColor}` : el.config.color}
+            </span>
+          </>
         )}
       </div>
 

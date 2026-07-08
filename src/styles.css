@@ -518,8 +518,8 @@ input {
   cursor: pointer;
 }
 
-.text-gradient-stops {
-  margin-top: 8px;
+.mode-row {
+  margin-bottom: 8px;
 }
 
 .color-name {
