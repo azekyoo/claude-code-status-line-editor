@@ -3,6 +3,8 @@
 Visual editor for the [Claude Code status line](https://code.claude.com/docs/en/statusline.md).
 Drag elements onto a live terminal preview, style them, export a ready-to-use `statusline.sh`.
 
+![Claude Code Statusline Editor — context bar with gradient fill selected in the inspector](docs/screenshot.png)
+
 ## Run
 
 ```sh
@@ -43,3 +45,6 @@ so their prefix/suffix never print alone.
 
 `scripts/gen-test.ts` generates a script covering every element type — run
 `npx tsx scripts/gen-test.ts out.sh` and pipe any mock payload into `bash out.sh`.
+
+`scripts/screenshot.mjs` regenerates the README screenshot (needs `npm run dev`
+running and Playwright's Chromium: `npx playwright install chromium`).
