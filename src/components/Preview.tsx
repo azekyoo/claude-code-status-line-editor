@@ -1,7 +1,8 @@
 import type { ElementInstance } from '../types'
 import { ELEMENT_DEFS } from '../elements'
 import { ANSI_HEX, configHex, MOCK } from '../mock'
-import { BAR_TYPES, barCells } from '../bar'
+import { BAR_TYPES, barCells, gradientRgb } from '../bar'
+import { NO_TEXT_GRADIENT } from '../exporter'
 
 const BAR_MOCK_PCT: Record<string, number> = {
   'context-bar': MOCK.context_window.used_percentage,
@@ -37,6 +38,22 @@ function Segment({ el }: { el: ElementInstance }) {
         <span style={{ color: ANSI_HEX.green }}>+{MOCK.cost.total_lines_added}</span>{' '}
         <span style={{ color: ANSI_HEX.red }}>-{MOCK.cost.total_lines_removed}</span>
         {el.config.suffix}
+      </span>
+    )
+  }
+  if (el.config.color === 'gradient' && !NO_TEXT_GRADIENT.has(el.type)) {
+    const text = el.config.prefix + def.preview(el.config) + el.config.suffix
+    const chars = [...text]
+    return (
+      <span style={{ ...style, color: undefined }}>
+        {chars.map((ch, i) => {
+          const [r, g, b] = gradientRgb(i, chars.length, el.config)
+          return (
+            <span key={i} style={{ color: `rgb(${r},${g},${b})` }}>
+              {ch}
+            </span>
+          )
+        })}
       </span>
     )
   }

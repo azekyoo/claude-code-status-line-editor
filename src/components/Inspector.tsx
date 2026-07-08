@@ -2,6 +2,46 @@ import type { AnsiColor, ElementConfig, ElementInstance } from '../types'
 import { ELEMENT_DEFS, SEP_GLYPHS } from '../elements'
 import { ANSI_HEX, ANSI_ORDER } from '../mock'
 import { BAR_COLOR_MODES, BAR_GLYPHS, BAR_STYLES, BAR_TYPES } from '../bar'
+import { NO_TEXT_GRADIENT } from '../exporter'
+
+function StopsEditor({
+  el,
+  set,
+  labels,
+  showRamp,
+}: {
+  el: ElementInstance
+  set: (patch: Partial<ElementConfig>) => void
+  labels: [string, string, string]
+  showRamp: boolean
+}) {
+  const keys = ['barLow', 'barMid', 'barHigh'] as const
+  return (
+    <>
+      <div className="stop-row">
+        {keys.map((k, i) => (
+          <label key={k} className="stop-item">
+            <input
+              type="color"
+              className="stop-input"
+              value={el.config[k]}
+              onChange={(e) => set({ [k]: e.target.value })}
+            />
+            <span className="stop-label">{labels[i]}</span>
+          </label>
+        ))}
+      </div>
+      {showRamp && (
+        <div
+          className="stop-preview"
+          style={{
+            background: `linear-gradient(to right, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`,
+          }}
+        />
+      )}
+    </>
+  )
+}
 
 export default function Inspector({
   el,
@@ -25,6 +65,8 @@ export default function Inspector({
   const set = (patch: Partial<ElementConfig>) => onChange(el.id, patch)
   const hasContent = el.type === 'text' || el.type === 'sep'
   const isBar = BAR_TYPES.has(el.type)
+  const canTextGradient = !NO_TEXT_GRADIENT.has(el.type)
+  const isTextGradient = canTextGradient && el.config.color === 'gradient'
 
   return (
     <aside className="inspector" onClick={(e) => e.stopPropagation()}>
@@ -106,33 +148,16 @@ export default function Inspector({
               <label className="field-label">
                 {el.config.barColorMode === 'threshold' ? 'Threshold colors' : 'Gradient stops'}
               </label>
-              <div className="stop-row">
-                {(
-                  [
-                    ['barLow', el.config.barColorMode === 'threshold' ? '< 50%' : 'start'],
-                    ['barMid', el.config.barColorMode === 'threshold' ? '50–79%' : 'middle'],
-                    ['barHigh', el.config.barColorMode === 'threshold' ? '≥ 80%' : 'end'],
-                  ] as const
-                ).map(([k, label]) => (
-                  <label key={k} className="stop-item">
-                    <input
-                      type="color"
-                      className="stop-input"
-                      value={el.config[k]}
-                      onChange={(e) => set({ [k]: e.target.value })}
-                    />
-                    <span className="stop-label">{label}</span>
-                  </label>
-                ))}
-              </div>
-              {el.config.barColorMode === 'gradient' && (
-                <div
-                  className="stop-preview"
-                  style={{
-                    background: `linear-gradient(to right, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`,
-                  }}
-                />
-              )}
+              <StopsEditor
+                el={el}
+                set={set}
+                labels={
+                  el.config.barColorMode === 'threshold'
+                    ? ['< 50%', '50–79%', '≥ 80%']
+                    : ['start', 'middle', 'end']
+                }
+                showRamp={el.config.barColorMode === 'gradient'}
+              />
             </div>
           )}
         </>
@@ -169,10 +194,29 @@ export default function Inspector({
               onChange={(e) => set({ color: 'custom', customColor: e.target.value })}
             />
           </label>
+          {canTextGradient && (
+            <button
+              className={`color-cell color-cell-gradient${isTextGradient ? ' active' : ''}`}
+              style={{
+                background: `linear-gradient(135deg, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`,
+              }}
+              onClick={() => set({ color: 'gradient' })}
+              title="gradient across the text"
+            />
+          )}
         </div>
         <span className="color-name">
-          {el.config.color === 'custom' ? `custom ${el.config.customColor}` : el.config.color}
+          {el.config.color === 'custom'
+            ? `custom ${el.config.customColor}`
+            : isTextGradient
+              ? 'gradient across text (truecolor)'
+              : el.config.color}
         </span>
+        {isTextGradient && (
+          <div className="text-gradient-stops">
+            <StopsEditor el={el} set={set} labels={['start', 'middle', 'end']} showRamp />
+          </div>
+        )}
       </div>
 
       <div className="field field-inline">

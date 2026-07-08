@@ -1,7 +1,33 @@
 import type { Doc, ElementInstance, ElementType } from './types'
 import { ELEMENT_DEFS } from './elements'
 import { ANSI_FG_CODE } from './mock'
-import { hexToRgb } from './bar'
+import { BAR_TYPES, hexToRgb } from './bar'
+
+/** types that can't take a per-character text gradient: bars have their own
+ *  fill modes, lines-changed embeds its own escape codes in the value */
+export const NO_TEXT_GRADIENT = new Set<ElementType>([...BAR_TYPES, 'lines-changed'])
+
+const usesTextGradient = (el: ElementInstance) =>
+  el.config.color === 'gradient' && !NO_TEXT_GRADIENT.has(el.type)
+
+/** runtime per-character gradient: grad <text> <lowRGB> <midRGB> <highRGB> */
+const GRAD_FN = [
+  '# per-character slicing needs a UTF-8 locale; provide one if none is set',
+  '[[ -z "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" ]] && export LC_ALL=C.UTF-8',
+  'grad() {',
+  '  local t="$1" n=${#1} o="" i u r g b',
+  '  for ((i=0; i<n; i++)); do',
+  '    u=$(( n > 1 ? i * 200 / (n - 1) : 0 ))',
+  '    if (( u <= 100 )); then',
+  '      r=$(( $2 + ($5 - $2) * u / 100 )); g=$(( $3 + ($6 - $3) * u / 100 )); b=$(( $4 + ($7 - $4) * u / 100 ))',
+  '    else',
+  '      r=$(( $5 + ($8 - $5) * (u - 100) / 100 )); g=$(( $6 + ($9 - $6) * (u - 100) / 100 )); b=$(( $7 + (${10} - $7) * (u - 100) / 100 ))',
+  '    fi',
+  `    o+=$'\\e[38;2;'"\${r};\${g};\${b}m\${t:i:1}"`,
+  '  done',
+  `  printf '%s' "$o"$'\\e[0m'`,
+  '}',
+]
 
 /** Element types whose segment may legitimately be empty at runtime —
  *  wrap them in a guard so prefix/suffix don't print alone. */
@@ -28,10 +54,13 @@ function sgrCodes(el: ElementInstance): string {
   const codes: string[] = []
   if (el.config.bold) codes.push('1')
   if (el.config.dim) codes.push('2')
+  if (usesTextGradient(el)) return codes.join(';') // grad() colors per char
   const fg =
     el.config.color === 'custom'
       ? `38;2;${hexToRgb(el.config.customColor).join(';')}`
-      : ANSI_FG_CODE[el.config.color]
+      : el.config.color === 'gradient'
+        ? '' // excluded type fell back to default color
+        : ANSI_FG_CODE[el.config.color]
   if (fg) codes.push(fg)
   return codes.join(';')
 }
@@ -42,6 +71,13 @@ function segmentExpr(el: ElementInstance): string {
   const value = isLiteral ? bashQuote(el.config.extra) : def.emit(el.config).value
   const inner = bashQuote(el.config.prefix) + value + bashQuote(el.config.suffix)
   const codes = sgrCodes(el)
+  if (usesTextGradient(el)) {
+    const stops = [el.config.barLow, el.config.barMid, el.config.barHigh]
+      .flatMap(hexToRgb)
+      .join(' ')
+    const call = `"$(grad "${inner}" ${stops})"`
+    return codes ? `$'\\e[${codes}m'${call}` : call
+  }
   if (!codes) return `"${inner}"`
   return `$'\\e[${codes}m'"${inner}"$'\\e[0m'`
 }
@@ -57,6 +93,10 @@ export function generateScript(doc: Doc): string {
     `j() { printf '%s' "$input" | jq -r "$1"; }`,
     '',
   ]
+
+  if (doc.rows.flat().some(usesTextGradient)) {
+    lines.push(...GRAD_FN, '')
+  }
 
   // Setup blocks, deduped by content: bar variables embed their config, so
   // two bars with different settings emit distinct blocks while identical

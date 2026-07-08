@@ -502,6 +502,10 @@ input {
   cursor: pointer;
 }
 
+.text-gradient-stops {
+  margin-top: 8px;
+}
+
 .color-name {
   display: block;
   margin-top: 5px;

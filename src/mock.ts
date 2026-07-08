@@ -81,7 +81,7 @@ export const ANSI_FG_CODE: Record<AnsiColor, string> = {
 
 /** display hex for an element's configured color (ANSI or custom) */
 export const configHex = (c: ElementConfig): string =>
-  c.color === 'custom' ? c.customColor : ANSI_HEX[c.color]
+  c.color === 'custom' ? c.customColor : c.color === 'gradient' ? c.barMid : ANSI_HEX[c.color]
 
 export const ANSI_ORDER: AnsiColor[] = [
   'default',

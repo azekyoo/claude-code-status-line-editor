@@ -48,7 +48,8 @@ export type ElementType =
   | 'sep'
 
 export interface ElementConfig {
-  color: AnsiColor | 'custom'
+  /** 'gradient' ramps across the rendered text using the barLow/Mid/High stops */
+  color: AnsiColor | 'custom' | 'gradient'
   /** hex color used when color === 'custom' (24-bit ANSI in the script) */
   customColor: string
   bold: boolean

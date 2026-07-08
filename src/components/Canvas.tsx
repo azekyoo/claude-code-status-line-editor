@@ -38,7 +38,15 @@ export function Chip({
       {...attributes}
       {...listeners}
     >
-      <span className="chip-swatch" style={{ background: configHex(el.config) }} />
+      <span
+        className="chip-swatch"
+        style={{
+          background:
+            el.config.color === 'gradient'
+              ? `linear-gradient(90deg, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`
+              : configHex(el.config),
+        }}
+      />
       <span className="chip-label">{isGlyph ? el.config.extra || def.label : def.label}</span>
       <button
         className="chip-x"
