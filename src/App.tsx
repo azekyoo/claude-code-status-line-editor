@@ -12,6 +12,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import type { ElementConfig, ElementInstance, ElementType } from './types'
 import { DEFAULT_CONFIG, ELEMENT_DEFS, makeInstance, seedIdCounter } from './elements'
+import { docFromHash } from './share'
 import Palette from './components/Palette'
 import Preview from './components/Preview'
 import Inspector from './components/Inspector'
@@ -77,9 +78,17 @@ function defaultRows(): ElementInstance[][] {
 }
 
 export default function App() {
-  const [rows, setRows] = useState<ElementInstance[][]>(() => loadRows() ?? defaultRows())
+  // a shared link's document takes precedence over the local autosave
+  const [rows, setRows] = useState<ElementInstance[][]>(
+    () => docFromHash() ?? loadRows() ?? defaultRows(),
+  )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
+
+  useEffect(() => {
+    // the imported design becomes the working copy; drop the stale hash
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search)
+  }, [])
 
   useEffect(() => {
     try {

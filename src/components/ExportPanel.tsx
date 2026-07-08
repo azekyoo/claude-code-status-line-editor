@@ -1,16 +1,24 @@
 import { useMemo, useState } from 'react'
 import type { Doc } from '../types'
 import { downloadScript, generateScript, SETTINGS_SNIPPET } from '../exporter'
+import { shareUrl } from '../share'
 
 export default function ExportPanel({ doc }: { doc: Doc }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
   const script = useMemo(() => generateScript(doc), [doc])
 
   const copy = async () => {
     await navigator.clipboard.writeText(script)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
+  }
+
+  const share = async () => {
+    await navigator.clipboard.writeText(shareUrl(doc.rows))
+    setShared(true)
+    setTimeout(() => setShared(false), 1500)
   }
 
   return (
@@ -20,6 +28,9 @@ export default function ExportPanel({ doc }: { doc: Doc }) {
           {open ? '▾' : '▸'} statusline.sh
         </button>
         <div className="export-actions">
+          <button className="ghost-btn" onClick={share} title="copy a link that opens this design">
+            {shared ? 'link copied ✓' : 'share link'}
+          </button>
           <button className="ghost-btn" onClick={copy}>
             {copied ? 'copied ✓' : 'copy'}
           </button>
