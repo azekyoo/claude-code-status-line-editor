@@ -48,11 +48,13 @@ export default function Palette({ onAdd }: { onAdd: (t: ElementType) => void }) 
       {CATEGORIES.map((cat) => (
         <section key={cat.key} className="palette-section">
           <h3 className="palette-cat">{cat.title}</h3>
-          {Object.values(ELEMENT_DEFS)
-            .filter((d) => d.category === cat.key)
-            .map((d) => (
-              <PaletteItem key={d.type} type={d.type} onAdd={onAdd} />
-            ))}
+          <div className="palette-grid">
+            {Object.values(ELEMENT_DEFS)
+              .filter((d) => d.category === cat.key)
+              .map((d) => (
+                <PaletteItem key={d.type} type={d.type} onAdd={onAdd} />
+              ))}
+          </div>
         </section>
       ))}
     </aside>
