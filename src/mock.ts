@@ -83,9 +83,10 @@ export const ANSI_FG_CODE: Record<AnsiColor, string> = {
 export const configHex = (c: ElementConfig): string =>
   c.color === 'custom' ? c.customColor : c.color === 'gradient' ? c.barMid : ANSI_HEX[c.color]
 
-/** grid display order: 'white' is omitted (visually identical to 'default',
- *  which emits no color code and follows the terminal theme) so the custom
- *  picker completes a clean 8×2 grid */
+/** grid display order (8×2 with the custom picker appended last): each normal
+ *  color sits directly above its bright variant — default over bright-white,
+ *  bright-black over the custom cell. 'white' is omitted (visually identical
+ *  to 'default', which emits no color code and follows the terminal theme). */
 export const ANSI_ORDER: AnsiColor[] = [
   'default',
   'red',
@@ -95,11 +96,11 @@ export const ANSI_ORDER: AnsiColor[] = [
   'magenta',
   'cyan',
   'bright-black',
+  'bright-white',
   'bright-red',
   'bright-green',
   'bright-yellow',
   'bright-blue',
   'bright-magenta',
   'bright-cyan',
-  'bright-white',
 ]
