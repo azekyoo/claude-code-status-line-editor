@@ -1,7 +1,7 @@
 import type { Doc, ElementInstance, ElementType } from './types'
 import { ELEMENT_DEFS } from './elements'
 import { ANSI_FG_CODE } from './mock'
-import { BAR_TYPES, hexToRgb } from './bar'
+import { BAR_TYPES, hexToRgb, nearestAnsiCode } from './bar'
 
 /** types that can't take a per-character text gradient: bars have their own
  *  fill modes, lines-changed embeds its own escape codes in the value */
@@ -10,12 +10,46 @@ export const NO_TEXT_GRADIENT = new Set<ElementType>([...BAR_TYPES, 'lines-chang
 const usesTextGradient = (el: ElementInstance) =>
   el.config.color === 'gradient' && !NO_TEXT_GRADIENT.has(el.type)
 
-/** runtime per-character gradient: grad <text> <lowRGB> <midRGB> <highRGB> */
+/** locate jq (PATH, override env var, common install spots) or print a
+ *  minimal line instead of a blank status line */
+const JQ_PROBE = [
+  'JQ_BIN="${CLAUDE_STATUSLINE_JQ:-jq}"',
+  'if ! command -v "$JQ_BIN" >/dev/null 2>&1; then',
+  '  for _cand in "$HOME/bin/jq" "$HOME/bin/jq.exe" /usr/local/bin/jq /opt/homebrew/bin/jq /c/ProgramData/chocolatey/bin/jq.exe; do',
+  '    [[ -x "$_cand" ]] && JQ_BIN="$_cand" && break',
+  '  done',
+  'fi',
+  'if ! command -v "$JQ_BIN" >/dev/null 2>&1; then',
+  `  printf '%s\\n' 'statusline: jq not found (install: https://jqlang.org)'`,
+  '  exit 0',
+  'fi',
+]
+
+/** 24-bit color support detection (Windows Terminal sets WT_SESSION but not COLORTERM) */
+const TRUECOLOR_DETECT = [
+  'USE_TRUECOLOR=0',
+  'if [[ "${COLORTERM:-}" == "truecolor" || "${COLORTERM:-}" == "24bit" || -n "${WT_SESSION:-}" ]]; then',
+  '  USE_TRUECOLOR=1',
+  'fi',
+]
+
+/** per-character slicing needs a UTF-8 locale; probe for one if none is set
+ *  (C.UTF-8 does not exist on macOS, en_US.UTF-8 does) */
+const LOCALE_PROBE = [
+  'if [[ -z "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" ]]; then',
+  `  if locale -a 2>/dev/null | grep -qiE '^C\\.utf-?8$'; then export LC_ALL=C.UTF-8`,
+  `  elif locale -a 2>/dev/null | grep -q '^en_US\\.UTF-8$'; then export LC_ALL=en_US.UTF-8`,
+  '  fi',
+  'fi',
+]
+
+/** runtime per-character gradient:
+ *  grad <text> <lowRGB> <midRGB> <highRGB> <fallback-escape>
+ *  without truecolor the whole text takes the fallback color */
 const GRAD_FN = [
-  '# per-character slicing needs a UTF-8 locale; provide one if none is set',
-  '[[ -z "${LC_ALL:-}${LC_CTYPE:-}${LANG:-}" ]] && export LC_ALL=C.UTF-8',
   'grad() {',
   '  local t="$1" n=${#1} o="" i u r g b',
+  `  if (( ! USE_TRUECOLOR )); then printf '%s' "\${11}\${t}"$'\\e[0m'; return; fi`,
   '  for ((i=0; i<n; i++)); do',
   '    u=$(( n > 1 ? i * 200 / (n - 1) : 0 ))',
   '    if (( u <= 100 )); then',
@@ -50,17 +84,19 @@ const OPTIONAL_VAR: Partial<Record<ElementType, string>> = {
 /** Escape a literal string for inclusion inside bash double quotes. */
 const bashQuote = (s: string) => s.replace(/[\\"$`]/g, (m) => '\\' + m)
 
+/** shell variable holding the (truecolor or fallback) escape for a custom hex */
+const customColorVar = (hex: string) => `C_${hex.replace('#', '').toLowerCase()}`
+
 function sgrCodes(el: ElementInstance): string {
   const codes: string[] = []
   if (el.config.bold) codes.push('1')
   if (el.config.dim) codes.push('2')
-  if (usesTextGradient(el)) return codes.join(';') // grad() colors per char
+  // custom colors resolve through a C_<hex> variable, gradients through grad()
+  if (usesTextGradient(el) || el.config.color === 'custom') return codes.join(';')
   const fg =
-    el.config.color === 'custom'
-      ? `38;2;${hexToRgb(el.config.customColor).join(';')}`
-      : el.config.color === 'gradient'
-        ? '' // excluded type fell back to default color
-        : ANSI_FG_CODE[el.config.color]
+    el.config.color === 'gradient'
+      ? '' // excluded type fell back to default color
+      : ANSI_FG_CODE[el.config.color]
   if (fg) codes.push(fg)
   return codes.join(';')
 }
@@ -75,28 +111,56 @@ function segmentExpr(el: ElementInstance): string {
     const stops = [el.config.barLow, el.config.barMid, el.config.barHigh]
       .flatMap(hexToRgb)
       .join(' ')
-    const call = `"$(grad "${inner}" ${stops})"`
+    const fallback = `$'\\e[${nearestAnsiCode(el.config.barMid)}m'`
+    const call = `"$(grad "${inner}" ${stops} ${fallback})"`
     return codes ? `$'\\e[${codes}m'${call}` : call
+  }
+  if (el.config.color === 'custom') {
+    const vn = customColorVar(el.config.customColor)
+    const pre = codes ? `$'\\e[${codes}m'` : ''
+    return `${pre}"\${${vn}}${inner}"$'\\e[0m'`
   }
   if (!codes) return `"${inner}"`
   return `$'\\e[${codes}m'"${inner}"$'\\e[0m'`
 }
 
 export function generateScript(doc: Doc): string {
+  const els = doc.rows.flat()
+  const hasTextGradient = els.some(usesTextGradient)
+  const customHexes = [
+    ...new Set(
+      els.filter((e) => e.config.color === 'custom').map((e) => e.config.customColor.toLowerCase()),
+    ),
+  ]
+  const needsTruecolor =
+    hasTextGradient ||
+    customHexes.length > 0 ||
+    els.some((e) => BAR_TYPES.has(e.type) && e.config.barColorMode !== 'solid')
+
   const lines: string[] = [
     '#!/usr/bin/env bash',
     '# Claude Code status line — generated by Claude Code Statusline Editor',
     '# Reads the statusline JSON payload on stdin and prints the status line.',
     '# Requires: jq  (https://jqlang.org)',
     '',
+    ...JQ_PROBE,
+    '',
     'input=$(cat)',
-    `j() { printf '%s' "$input" | jq -r "$1"; }`,
+    // native Windows jq.exe writes CRLF; strip stray CR from every field
+    `j() { printf '%s' "$input" | "$JQ_BIN" -r "$1" | tr -d '\\r'; }`,
     '',
   ]
 
-  if (doc.rows.flat().some(usesTextGradient)) {
-    lines.push(...GRAD_FN, '')
+  if (needsTruecolor) lines.push(...TRUECOLOR_DETECT, '')
+  if (hasTextGradient) lines.push(...LOCALE_PROBE, '', ...GRAD_FN, '')
+
+  for (const hex of customHexes) {
+    const vn = customColorVar(hex)
+    lines.push(
+      `if (( USE_TRUECOLOR )); then ${vn}=$'\\e[38;2;${hexToRgb(hex).join(';')}m'; else ${vn}=$'\\e[${nearestAnsiCode(hex)}m'; fi`,
+    )
   }
+  if (customHexes.length > 0) lines.push('')
 
   // Setup blocks, deduped by content: bar variables embed their config, so
   // two bars with different settings emit distinct blocks while identical

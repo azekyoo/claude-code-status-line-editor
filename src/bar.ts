@@ -1,4 +1,22 @@
 import type { BarColorMode, BarStyle, ElementConfig, ElementType } from './types'
+import { ANSI_FG_CODE, ANSI_HEX, ANSI_ORDER } from './mock'
+
+/** nearest 16-color ANSI code for a hex color — used as the no-truecolor fallback */
+export function nearestAnsiCode(hex: string): string {
+  const [r, g, b] = hexToRgb(hex)
+  let best = 'yellow' as (typeof ANSI_ORDER)[number]
+  let bd = Infinity
+  for (const c of ANSI_ORDER) {
+    if (c === 'default') continue
+    const [cr, cg, cb] = hexToRgb(ANSI_HEX[c])
+    const d = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2
+    if (d < bd) {
+      bd = d
+      best = c
+    }
+  }
+  return ANSI_FG_CODE[best]
+}
 
 export const BAR_GLYPHS: Record<BarStyle, { fill: string; empty: string }> = {
   blocks: { fill: '█', empty: '░' },
@@ -107,29 +125,42 @@ export function buildBarSetup(
     )
   } else if (c.barColorMode === 'threshold') {
     const cv = `_c_${key}`
-    const esc = (hex: string) => {
+    const escT = (hex: string) => {
       const [r, gg, b] = hexToRgb(hex)
       return `$'\\e[38;2;${r};${gg};${b}m'`
     }
+    const escF = (hex: string) => `$'\\e[${nearestAnsiCode(hex)}m'`
     lines.push(
-      `if (( ${p} >= 80 )); then ${cv}=${esc(c.barHigh)}; elif (( ${p} >= 50 )); then ${cv}=${esc(c.barMid)}; else ${cv}=${esc(c.barLow)}; fi`,
+      `if (( USE_TRUECOLOR )); then`,
+      `  if (( ${p} >= 80 )); then ${cv}=${escT(c.barHigh)}; elif (( ${p} >= 50 )); then ${cv}=${escT(c.barMid)}; else ${cv}=${escT(c.barLow)}; fi`,
+      `else`,
+      `  if (( ${p} >= 80 )); then ${cv}=${escF(c.barHigh)}; elif (( ${p} >= 50 )); then ${cv}=${escF(c.barMid)}; else ${cv}=${escF(c.barLow)}; fi`,
+      `fi`,
       `for ((_i=0; _i<${w}; _i++)); do if (( _i < ${f} )); then ${v}+="\${${cv}}${g.fill}"; else ${v}+=$'\\e[90m'"${g.empty}"; fi; done`,
       `${v}+=$'\\e[0m'`,
     )
   } else {
-    // gradient: per-cell 24-bit color across the low → mid → high stops
+    // gradient: per-cell 24-bit color across the low → mid → high stops;
+    // without truecolor, degrade to a threshold-colored 16-color bar
     const [L, M, H] = [hexToRgb(c.barLow), hexToRgb(c.barMid), hexToRgb(c.barHigh)]
+    const cv = `_c_${key}`
+    const escF = (hex: string) => `$'\\e[${nearestAnsiCode(hex)}m'`
     const u = w > 1 ? `_i * 200 / ${w - 1}` : '0'
     const ch = (idx: number) =>
       `${['_r', '_g', '_b'][idx]}=$(( _u <= 100 ? ${L[idx]} + (${M[idx] - L[idx]}) * _u / 100 : ${M[idx]} + (${H[idx] - M[idx]}) * (_u - 100) / 100 ))`
     lines.push(
-      `for ((_i=0; _i<${w}; _i++)); do`,
-      `  if (( _i < ${f} )); then`,
-      `    _u=$(( ${u} ))`,
-      `    ${ch(0)}; ${ch(1)}; ${ch(2)}`,
-      `    ${v}+=$'\\e[38;2;'"\${_r};\${_g};\${_b}m${g.fill}"`,
-      `  else ${v}+=$'\\e[90m'"${g.empty}"; fi`,
-      `done`,
+      `if (( USE_TRUECOLOR )); then`,
+      `  for ((_i=0; _i<${w}; _i++)); do`,
+      `    if (( _i < ${f} )); then`,
+      `      _u=$(( ${u} ))`,
+      `      ${ch(0)}; ${ch(1)}; ${ch(2)}`,
+      `      ${v}+=$'\\e[38;2;'"\${_r};\${_g};\${_b}m${g.fill}"`,
+      `    else ${v}+=$'\\e[90m'"${g.empty}"; fi`,
+      `  done`,
+      `else`,
+      `  if (( ${p} >= 80 )); then ${cv}=${escF(c.barHigh)}; elif (( ${p} >= 50 )); then ${cv}=${escF(c.barMid)}; else ${cv}=${escF(c.barLow)}; fi`,
+      `  for ((_i=0; _i<${w}; _i++)); do if (( _i < ${f} )); then ${v}+="\${${cv}}${g.fill}"; else ${v}+=$'\\e[90m'"${g.empty}"; fi; done`,
+      `fi`,
       `${v}+=$'\\e[0m'`,
     )
   }

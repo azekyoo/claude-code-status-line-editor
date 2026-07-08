@@ -27,6 +27,13 @@ The editor keeps a document of rows × elements. Each element definition carries
 Segments that may be empty at runtime (git branch, session name, vim mode) are guarded
 so their prefix/suffix never print alone.
 
+The script degrades gracefully across platforms: truecolor (gradients, custom colors)
+is detected at runtime via `COLORTERM`/`WT_SESSION` and falls back to the nearest
+16-color ANSI code elsewhere (e.g. macOS Terminal.app); jq is probed in common install
+locations (override with `CLAUDE_STATUSLINE_JQ=/path`) with a readable message when
+missing; CRLF from native Windows jq builds is stripped; a UTF-8 locale is selected
+when the environment provides none.
+
 ## Install the exported script
 
 1. Save as `~/.claude/statusline.sh`, `chmod +x` it
