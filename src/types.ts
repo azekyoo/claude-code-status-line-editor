@@ -57,6 +57,11 @@ export interface ElementConfig {
   barStyle: BarStyle
   barWidth: number
   barColorMode: BarColorMode
+  /** hex color stops for threshold/gradient fills:
+   *  threshold → whole bar low/mid/high by usage; gradient → 3-stop ramp */
+  barLow: string
+  barMid: string
+  barHigh: string
 }
 
 export interface ElementInstance {

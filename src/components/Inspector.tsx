@@ -101,11 +101,51 @@ export default function Inspector({
               {BAR_COLOR_MODES.find((m) => m.key === el.config.barColorMode)?.hint}
             </span>
           </div>
+          {el.config.barColorMode !== 'solid' && (
+            <div className="field">
+              <label className="field-label">
+                {el.config.barColorMode === 'threshold' ? 'Threshold colors' : 'Gradient stops'}
+              </label>
+              <div className="stop-row">
+                {(
+                  [
+                    ['barLow', el.config.barColorMode === 'threshold' ? '< 50%' : 'start'],
+                    ['barMid', el.config.barColorMode === 'threshold' ? '50–79%' : 'middle'],
+                    ['barHigh', el.config.barColorMode === 'threshold' ? '≥ 80%' : 'end'],
+                  ] as const
+                ).map(([k, label]) => (
+                  <label key={k} className="stop-item">
+                    <input
+                      type="color"
+                      className="stop-input"
+                      value={el.config[k]}
+                      onChange={(e) => set({ [k]: e.target.value })}
+                    />
+                    <span className="stop-label">{label}</span>
+                  </label>
+                ))}
+              </div>
+              {el.config.barColorMode === 'gradient' && (
+                <div
+                  className="stop-preview"
+                  style={{
+                    background: `linear-gradient(to right, ${el.config.barLow}, ${el.config.barMid}, ${el.config.barHigh})`,
+                  }}
+                />
+              )}
+            </div>
+          )}
         </>
       )}
 
       <div className="field">
-        <label className="field-label">Color{isBar ? ' (prefix/suffix + solid fill)' : ''}</label>
+        <label className="field-label">
+          {isBar
+            ? el.config.barColorMode === 'solid'
+              ? 'Color (fill + prefix/suffix)'
+              : 'Color (prefix/suffix only)'
+            : 'Color'}
+        </label>
         <div className="color-grid">
           {ANSI_ORDER.map((c: AnsiColor) => (
             <button

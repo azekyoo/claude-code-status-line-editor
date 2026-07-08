@@ -520,6 +520,50 @@ input {
   accent-color: var(--accent);
 }
 
+.stop-row {
+  display: flex;
+  gap: 8px;
+}
+
+.stop-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.stop-input {
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+}
+
+.stop-input::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.stop-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.stop-label {
+  font-size: 10px;
+  color: var(--ink-dim);
+}
+
+.stop-preview {
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 8px;
+}
+
 .glyph-row {
   display: flex;
   flex-wrap: wrap;

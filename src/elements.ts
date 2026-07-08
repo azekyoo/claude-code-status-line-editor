@@ -298,6 +298,9 @@ export const DEFAULT_CONFIG: ElementConfig = {
   barStyle: 'blocks',
   barWidth: 10,
   barColorMode: 'solid',
+  barLow: '#87c05f',
+  barMid: '#d9a854',
+  barHigh: '#e05f5f',
 }
 
 let counter = 0

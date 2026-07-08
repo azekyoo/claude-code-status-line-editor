@@ -19,25 +19,30 @@ export const BAR_COLOR_MODES: { key: BarColorMode; label: string; hint: string }
 
 export const BAR_TYPES = new Set<ElementType>(['context-bar', 'rate-5h-bar', 'rate-7d-bar'])
 
-/** gradient color stops (matches the preview terminal theme) */
-const G = [135, 192, 95] // green
-const Y = [217, 168, 84] // yellow
-const R = [224, 95, 95] // red
+export const BAR_STOP_DEFAULTS = { low: '#87c05f', mid: '#d9a854', high: '#e05f5f' }
+
+export function hexToRgb(hex: string): number[] {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return [214, 210, 200] // theme ink fallback for malformed input
+  const n = parseInt(m[1], 16)
+  return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
+}
 
 const lerp3 = (a: number[], b: number[], t: number) =>
   a.map((v, i) => Math.round(v + (b[i] - v) * t))
 
-/** color of gradient cell i out of w (0-based), as [r,g,b] */
-export function gradientRgb(i: number, w: number): number[] {
+/** color of gradient cell i out of w (0-based) across low→mid→high stops */
+export function gradientRgb(i: number, w: number, c: ElementConfig): number[] {
   const u = w > 1 ? (i * 200) / (w - 1) : 0
-  return u <= 100 ? lerp3(G, Y, u / 100) : lerp3(Y, R, (u - 100) / 100)
+  const [low, mid, high] = [hexToRgb(c.barLow), hexToRgb(c.barMid), hexToRgb(c.barHigh)]
+  return u <= 100 ? lerp3(low, mid, u / 100) : lerp3(mid, high, (u - 100) / 100)
 }
 
 const toHex = (rgb: number[]) =>
   '#' + rgb.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('')
 
-export const thresholdHex = (pct: number) =>
-  pct >= 80 ? toHex(R) : pct >= 50 ? toHex(Y) : toHex(G)
+export const thresholdHex = (pct: number, c: ElementConfig) =>
+  pct >= 80 ? c.barHigh : pct >= 50 ? c.barMid : c.barLow
 
 export interface BarCell {
   ch: string
@@ -60,8 +65,8 @@ export function barCells(pct: number, c: ElementConfig): BarCell[] {
           c.barColorMode === 'solid'
             ? null
             : c.barColorMode === 'threshold'
-              ? thresholdHex(p)
-              : toHex(gradientRgb(i, w)),
+              ? thresholdHex(p, c)
+              : toHex(gradientRgb(i, w, c)),
       })
     } else {
       cells.push({ ch: g.empty, color: c.barColorMode === 'solid' ? null : '#6b6860' })
@@ -82,7 +87,11 @@ export function buildBarSetup(
 ): { setup: string[]; value: string } {
   const w = c.barWidth
   const g = BAR_GLYPHS[c.barStyle]
-  const key = `${keyBase}_${w}_${c.barStyle}_${c.barColorMode}`
+  const stops =
+    c.barColorMode === 'solid'
+      ? ''
+      : `_${c.barLow.replace('#', '')}_${c.barMid.replace('#', '')}_${c.barHigh.replace('#', '')}`
+  const key = `${keyBase}_${w}_${c.barStyle}_${c.barColorMode}${stops}`
   const v = `seg_bar_${key}`
   const p = `_p_${key}`
   const f = `_f_${key}`
@@ -98,20 +107,26 @@ export function buildBarSetup(
     )
   } else if (c.barColorMode === 'threshold') {
     const cv = `_c_${key}`
+    const esc = (hex: string) => {
+      const [r, gg, b] = hexToRgb(hex)
+      return `$'\\e[38;2;${r};${gg};${b}m'`
+    }
     lines.push(
-      `if (( ${p} >= 80 )); then ${cv}=$'\\e[31m'; elif (( ${p} >= 50 )); then ${cv}=$'\\e[33m'; else ${cv}=$'\\e[32m'; fi`,
+      `if (( ${p} >= 80 )); then ${cv}=${esc(c.barHigh)}; elif (( ${p} >= 50 )); then ${cv}=${esc(c.barMid)}; else ${cv}=${esc(c.barLow)}; fi`,
       `for ((_i=0; _i<${w}; _i++)); do if (( _i < ${f} )); then ${v}+="\${${cv}}${g.fill}"; else ${v}+=$'\\e[90m'"${g.empty}"; fi; done`,
       `${v}+=$'\\e[0m'`,
     )
   } else {
-    // gradient: per-cell 24-bit color, green → yellow → red across the width
+    // gradient: per-cell 24-bit color across the low → mid → high stops
+    const [L, M, H] = [hexToRgb(c.barLow), hexToRgb(c.barMid), hexToRgb(c.barHigh)]
     const u = w > 1 ? `_i * 200 / ${w - 1}` : '0'
+    const ch = (idx: number) =>
+      `${['_r', '_g', '_b'][idx]}=$(( _u <= 100 ? ${L[idx]} + (${M[idx] - L[idx]}) * _u / 100 : ${M[idx]} + (${H[idx] - M[idx]}) * (_u - 100) / 100 ))`
     lines.push(
       `for ((_i=0; _i<${w}; _i++)); do`,
       `  if (( _i < ${f} )); then`,
       `    _u=$(( ${u} ))`,
-      `    if (( _u <= 100 )); then _r=$(( 135 + 82 * _u / 100 )); _g=$(( 192 - 24 * _u / 100 )); _b=$(( 95 - 11 * _u / 100 ))`,
-      `    else _r=$(( 217 + 7 * (_u - 100) / 100 )); _g=$(( 168 - 73 * (_u - 100) / 100 )); _b=$(( 84 + 11 * (_u - 100) / 100 )); fi`,
+      `    ${ch(0)}; ${ch(1)}; ${ch(2)}`,
       `    ${v}+=$'\\e[38;2;'"\${_r};\${_g};\${_b}m${g.fill}"`,
       `  else ${v}+=$'\\e[90m'"${g.empty}"; fi`,
       `done`,
