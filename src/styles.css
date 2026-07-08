@@ -98,9 +98,25 @@ input {
   margin-top: 2px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .header-meta {
   color: var(--ink-faint);
   font-size: 11px;
+}
+
+.github-link {
+  display: inline-flex;
+  color: var(--ink-dim);
+  transition: color 0.15s;
+}
+
+.github-link:hover {
+  color: var(--accent);
 }
 
 /* ── layout ─────────────────────────────── */
