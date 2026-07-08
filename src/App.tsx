@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -99,9 +99,45 @@ export default function App() {
     }
   }, [rows])
 
+  // ── history ────────────────────────────
+  const past = useRef<ElementInstance[][][]>([])
+  const future = useRef<ElementInstance[][][]>([])
+  // consecutive inspector edits to the same element coalesce into one undo step
+  const lastPatchId = useRef<string | null>(null)
+
+  /** apply a document change, recording it in the undo history */
+  const commit = (next: ElementInstance[][], patchId?: string) => {
+    if (next === rows) return
+    if (!(patchId && lastPatchId.current === patchId)) {
+      past.current.push(rows)
+      if (past.current.length > 100) past.current.shift()
+    }
+    future.current = []
+    lastPatchId.current = patchId ?? null
+    setRows(next)
+  }
+
+  const undo = () => {
+    const prev = past.current.pop()
+    if (!prev) return
+    future.current.push(rows)
+    lastPatchId.current = null
+    setRows(prev)
+    if (selectedId && !prev.flat().some((e) => e.id === selectedId)) setSelectedId(null)
+  }
+
+  const redo = () => {
+    const next = future.current.pop()
+    if (!next) return
+    past.current.push(rows)
+    lastPatchId.current = null
+    setRows(next)
+    if (selectedId && !next.flat().some((e) => e.id === selectedId)) setSelectedId(null)
+  }
+
   const resetDoc = () => {
     if (!window.confirm('Reset the status line to the default template?')) return
-    setRows(defaultRows())
+    commit(defaultRows())
     setSelectedId(null)
   }
 
@@ -122,32 +158,30 @@ export default function App() {
 
   const addElement = (type: ElementType, rowIndex?: number, at?: number) => {
     const el = makeInstance(type)
-    setRows((rs) => {
-      const next = rs.map((r) => [...r])
-      const r = rowIndex ?? next.length - 1
-      const row = next[Math.min(r, next.length - 1)]
-      row.splice(at ?? row.length, 0, el)
-      return next
-    })
+    const next = rows.map((r) => [...r])
+    const row = next[Math.min(rowIndex ?? next.length - 1, next.length - 1)]
+    row.splice(at ?? row.length, 0, el)
+    commit(next)
     setSelectedId(el.id)
   }
 
   const removeElement = (id: string) => {
-    setRows((rs) => rs.map((r) => r.filter((e) => e.id !== id)))
+    commit(rows.map((r) => r.filter((e) => e.id !== id)))
     if (selectedId === id) setSelectedId(null)
   }
 
   const patchElement = (id: string, patch: Partial<ElementConfig>) => {
-    setRows((rs) =>
-      rs.map((r) => r.map((e) => (e.id === id ? { ...e, config: { ...e.config, ...patch } } : e))),
+    commit(
+      rows.map((r) => r.map((e) => (e.id === id ? { ...e, config: { ...e.config, ...patch } } : e))),
+      id,
     )
   }
 
-  const addRow = () => setRows((rs) => [...rs, []])
+  const addRow = () => commit([...rows, []])
   const removeRow = (i: number) => {
     if (rows.length <= 1) return
     if (selectedId && rows[i]?.some((e) => e.id === selectedId)) setSelectedId(null)
-    setRows((rs) => (rs.length > 1 ? rs.filter((_, idx) => idx !== i) : rs))
+    commit(rows.filter((_, idx) => idx !== i))
   }
 
   const onDragStart = (e: DragStartEvent) => setDragging(String(e.active.id))
@@ -173,31 +207,47 @@ export default function App() {
       const t = resolveTarget(rows)
       if (!t) return
       const el = makeInstance(type)
-      setRows((rs) => {
-        const next = rs.map((r) => [...r])
-        next[t[0]].splice(Math.min(t[1], next[t[0]].length), 0, el)
-        return next
-      })
+      const next = rows.map((r) => [...r])
+      next[t[0]].splice(Math.min(t[1], next[t[0]].length), 0, el)
+      commit(next)
       setSelectedId(el.id)
       return
     }
 
     if (aid === oid) return
-    setRows((rs) => {
-      const from = locate(aid, rs)
-      const to = resolveTarget(rs)
-      if (!from || !to) return rs
-      if (from[0] === to[0]) {
-        const next = rs.map((r) => [...r])
-        next[from[0]] = arrayMove(next[from[0]], from[1], Math.min(to[1], next[from[0]].length - 1))
-        return next
-      }
-      const next = rs.map((r) => [...r])
+    const from = locate(aid, rows)
+    const to = resolveTarget(rows)
+    if (!from || !to) return
+    const next = rows.map((r) => [...r])
+    if (from[0] === to[0]) {
+      next[from[0]] = arrayMove(next[from[0]], from[1], Math.min(to[1], next[from[0]].length - 1))
+    } else {
       const [el] = next[from[0]].splice(from[1], 1)
       next[to[0]].splice(Math.min(to[1], next[to[0]].length), 0, el)
-      return next
-    })
+    }
+    commit(next)
   }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // let text fields keep their native undo and delete behavior
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
+      const mod = e.ctrlKey || e.metaKey
+      if (mod && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        undo()
+      } else if ((mod && e.shiftKey && e.key.toLowerCase() === 'z') || (mod && e.key.toLowerCase() === 'y')) {
+        e.preventDefault()
+        redo()
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+        e.preventDefault()
+        removeElement(selectedId)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   const dragLabel = useMemo(() => {
     if (!dragging) return null
@@ -249,6 +299,12 @@ export default function App() {
               <div className="canvas-head">
                 <h2 className="panel-title">Lines</h2>
                 <div className="canvas-actions">
+                  <button className="ghost-btn" onClick={undo} title="undo (Ctrl+Z)">
+                    ↶
+                  </button>
+                  <button className="ghost-btn" onClick={redo} title="redo (Ctrl+Shift+Z)">
+                    ↷
+                  </button>
                   <button className="ghost-btn" onClick={resetDoc} title="restore default template">
                     reset
                   </button>
