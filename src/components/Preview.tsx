@@ -4,11 +4,13 @@ import { ANSI_HEX, configHex, MOCK } from '../mock'
 import { BAR_TYPES, barCells, gradientRgb } from '../bar'
 import { NO_TEXT_GRADIENT } from '../exporter'
 
-const BAR_MOCK_PCT: Record<string, number> = {
-  'context-bar': MOCK.context_window.used_percentage,
-  'rate-5h-bar': MOCK.rate_limits.five_hour.used_percentage,
-  'rate-7d-bar': MOCK.rate_limits.seven_day.used_percentage,
-}
+// read at render time so mock data edits show live
+const barMockPct = (type: string): number =>
+  type === 'context-bar'
+    ? MOCK.context_window.used_percentage
+    : type === 'rate-5h-bar'
+      ? MOCK.rate_limits.five_hour.used_percentage
+      : MOCK.rate_limits.seven_day.used_percentage
 
 function Segment({ el }: { el: ElementInstance }) {
   const def = ELEMENT_DEFS[el.type]
@@ -18,7 +20,7 @@ function Segment({ el }: { el: ElementInstance }) {
     opacity: el.config.dim ? 0.55 : 1,
   }
   if (BAR_TYPES.has(el.type)) {
-    const cells = barCells(BAR_MOCK_PCT[el.type] ?? 0, el.config)
+    const cells = barCells(barMockPct(el.type), el.config)
     return (
       <span style={style}>
         {el.config.prefix}
@@ -73,7 +75,9 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
         <span className="tl-dot" />
         <span className="tl-dot" />
         <span className="tl-dot" />
-        <span className="terminal-title">gaspard@dev: ~/projects/statusline-editor</span>
+        <span className="terminal-title">
+          gaspard@dev: {MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~')}
+        </span>
       </div>
       <div className="terminal-body">
         <div className="term-history">

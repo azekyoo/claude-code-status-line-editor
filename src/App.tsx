@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -13,12 +13,16 @@ import { arrayMove } from '@dnd-kit/sortable'
 import type { ElementConfig, ElementInstance, ElementType } from './types'
 import { DEFAULT_CONFIG, ELEMENT_DEFS, makeInstance, seedIdCounter } from './elements'
 import { docFromHash } from './share'
+import { loadMock } from './mock'
 import logoUrl from './assets/logo.png'
 import Palette from './components/Palette'
 import Preview from './components/Preview'
 import Inspector from './components/Inspector'
 import ExportPanel from './components/ExportPanel'
+import MockPanel from './components/MockPanel'
 import { Row } from './components/Canvas'
+
+loadMock()
 
 const STORAGE_KEY = 'ccse-doc-v1'
 
@@ -85,6 +89,8 @@ export default function App() {
   )
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [dragging, setDragging] = useState<string | null>(null)
+  // MOCK is a mutable singleton; bumping this re-renders the preview after edits
+  const [, bumpMock] = useReducer((x: number) => x + 1, 0)
 
   useEffect(() => {
     // the imported design becomes the working copy; drop the stale hash
@@ -294,6 +300,8 @@ export default function App() {
 
           <div className="center" onClick={(e) => e.stopPropagation()}>
             <Preview rows={rows} />
+
+            <MockPanel onChange={bumpMock} />
 
             <section className="canvas">
               <div className="canvas-head">

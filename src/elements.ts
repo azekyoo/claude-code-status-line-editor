@@ -74,7 +74,7 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
     hint: 'Current directory, ~ shortened',
     category: 'workspace',
     defaults: { color: 'blue' },
-    preview: () => MOCK.workspace.current_dir.replace('/home/gaspard', '~'),
+    preview: () => MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~'),
     emit: () => ({
       setup: [`seg_path="$(j '.workspace.current_dir // "?"')"`, `seg_path="\${seg_path/#$HOME/\\~}"`],
       value: '${seg_path}',

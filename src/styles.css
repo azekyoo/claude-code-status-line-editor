@@ -673,6 +673,28 @@ input {
   background: rgba(224, 95, 95, 0.08);
 }
 
+/* ── mock data panel ────────────────────── */
+.mock-body {
+  border-top: 1px solid var(--border-soft);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 14px;
+}
+
+.mock-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .mock-body {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* ── export ─────────────────────────────── */
 .export {
   margin-top: 18px;

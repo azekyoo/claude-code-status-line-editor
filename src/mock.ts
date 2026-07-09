@@ -1,6 +1,8 @@
 import type { AnsiColor, ElementConfig } from './types'
 
-/** Mock stdin payload used to drive the live preview (mirrors real schema). */
+/** Mock stdin payload used to drive the live preview (mirrors real schema).
+ *  Mutable: the mock data panel edits it in place, then bumps a version
+ *  counter in App so the preview re-renders. */
 export const MOCK = {
   session_id: 'f3b1c2d4',
   session_name: 'editor',
@@ -36,6 +38,52 @@ export const MOCK = {
   vim: { mode: 'NORMAL' },
   gitBranch: 'feat/element-palette',
   clock: '14:32',
+}
+
+const DEFAULT_MOCK_JSON = JSON.stringify(MOCK)
+const MOCK_KEY = 'ccse-mock-v1'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deepMerge(target: any, source: any) {
+  for (const k of Object.keys(source)) {
+    if (
+      source[k] &&
+      typeof source[k] === 'object' &&
+      !Array.isArray(source[k]) &&
+      target[k] &&
+      typeof target[k] === 'object'
+    ) {
+      deepMerge(target[k], source[k])
+    } else if (typeof source[k] === typeof target[k]) {
+      target[k] = source[k]
+    }
+  }
+}
+
+export function resetMock() {
+  deepMerge(MOCK, JSON.parse(DEFAULT_MOCK_JSON))
+  try {
+    localStorage.removeItem(MOCK_KEY)
+  } catch {
+    /* best-effort */
+  }
+}
+
+export function saveMock() {
+  try {
+    localStorage.setItem(MOCK_KEY, JSON.stringify(MOCK))
+  } catch {
+    /* best-effort */
+  }
+}
+
+export function loadMock() {
+  try {
+    const raw = localStorage.getItem(MOCK_KEY)
+    if (raw) deepMerge(MOCK, JSON.parse(raw))
+  } catch {
+    /* best-effort */
+  }
 }
 
 /** Terminal theme used by the preview pane (warm dark, WezTerm-ish). */
