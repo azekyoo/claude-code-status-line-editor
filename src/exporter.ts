@@ -81,6 +81,13 @@ const OPTIONAL_VAR: Partial<Record<ElementType, string>> = {
   'rate-7d-reset': 'seg_r7rst',
 }
 
+/** segment variable to guard on when the element may be empty at runtime */
+function optionalVar(el: ElementInstance): string | null {
+  // repo-diff lines are empty outside repos and when the tree is clean
+  if (el.type === 'lines-changed') return el.config.extra === 'session' ? null : 'seg_glines'
+  return OPTIONAL_TYPES.has(el.type) ? (OPTIONAL_VAR[el.type] ?? null) : null
+}
+
 /** Escape a literal string for inclusion inside bash double quotes. */
 const bashQuote = (s: string) => s.replace(/[\\"$`]/g, (m) => '\\' + m)
 
@@ -183,8 +190,9 @@ export function generateScript(doc: Doc): string {
     lines.push(`${v}=""`)
     for (const el of row) {
       const expr = segmentExpr(el)
-      if (OPTIONAL_TYPES.has(el.type)) {
-        lines.push(`[[ -n "\${${OPTIONAL_VAR[el.type]}}" ]] && ${v}+=${expr}`)
+      const guard = optionalVar(el)
+      if (guard) {
+        lines.push(`[[ -n "\${${guard}}" ]] && ${v}+=${expr}`)
       } else {
         lines.push(`${v}+=${expr}`)
       }

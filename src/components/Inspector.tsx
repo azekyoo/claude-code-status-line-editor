@@ -107,6 +107,33 @@ export default function Inspector({
         </div>
       )}
 
+      {el.type === 'lines-changed' && (
+        <div className="field">
+          <label className="field-label">Diff source</label>
+          <div className="field-inline">
+            <button
+              className={`toggle${el.config.extra !== 'session' ? ' on' : ''}`}
+              onClick={() => set({ extra: 'repo' })}
+              title="uncommitted changes vs HEAD"
+            >
+              git repo
+            </button>
+            <button
+              className={`toggle${el.config.extra === 'session' ? ' on' : ''}`}
+              onClick={() => set({ extra: 'session' })}
+              title="lines Claude changed this session"
+            >
+              session
+            </button>
+          </div>
+          <span className="color-name">
+            {el.config.extra === 'session'
+              ? 'lines Claude changed this session'
+              : 'uncommitted diff vs HEAD — hidden when clean or outside a repo'}
+          </span>
+        </div>
+      )}
+
       {isBar && (
         <>
           <div className="field">

@@ -138,16 +138,28 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
   'lines-changed': {
     type: 'lines-changed',
     label: 'Lines ±',
-    hint: 'Lines added / removed (fixed green/red)',
+    hint: 'Lines added / removed (git repo or Claude session)',
     category: 'usage',
-    defaults: {},
+    defaults: { extra: 'repo' },
     preview: () => `+${MOCK.cost.total_lines_added} -${MOCK.cost.total_lines_removed}`,
-    emit: () => ({
-      setup: [
-        `seg_lines=$'\\e[32m'"+$(j '.cost.total_lines_added // 0')"$'\\e[0m \\e[31m'"-$(j '.cost.total_lines_removed // 0')"$'\\e[0m'`,
-      ],
-      value: '${seg_lines}',
-    }),
+    emit: (c) =>
+      c.extra === 'session'
+        ? {
+            setup: [
+              `seg_lines=$'\\e[32m'"+$(j '.cost.total_lines_added // 0')"$'\\e[0m \\e[31m'"-$(j '.cost.total_lines_removed // 0')"$'\\e[0m'`,
+            ],
+            value: '${seg_lines}',
+          }
+        : {
+            // uncommitted working-tree diff vs HEAD; empty outside repos and when clean
+            setup: [
+              `_gdiff=$(git -C "$(j '.workspace.current_dir // "."')" diff HEAD --numstat 2>/dev/null | awk '{a+=$1; r+=$2} END{if (NR>0) printf "%d %d", a, r}')`,
+              `if [[ -n "$_gdiff" ]]; then`,
+              `  seg_glines=$'\\e[32m'"+\${_gdiff%% *}"$'\\e[0m \\e[31m'"-\${_gdiff##* }"$'\\e[0m'`,
+              `else seg_glines=""; fi`,
+            ],
+            value: '${seg_glines}',
+          },
   },
   'context-pct': {
     type: 'context-pct',
