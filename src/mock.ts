@@ -8,8 +8,8 @@ export const MOCK = {
   session_name: 'editor',
   model: { id: 'claude-fable-5', display_name: 'Fable' },
   workspace: {
-    current_dir: '/home/gaspard/projects/statusline-editor/src',
-    project_dir: '/home/gaspard/projects/statusline-editor',
+    current_dir: '/home/dev/projects/statusline-editor/src',
+    project_dir: '/home/dev/projects/statusline-editor',
   },
   version: '2.1.90',
   output_style: { name: 'default' },

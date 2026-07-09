@@ -76,7 +76,7 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
         <span className="tl-dot" />
         <span className="tl-dot" />
         <span className="terminal-title">
-          gaspard@dev: {MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~')}
+          dev@local: {MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~')}
         </span>
       </div>
       <div className="terminal-body">
