@@ -338,7 +338,12 @@ export default function App() {
             <ExportPanel doc={{ rows }} />
           </div>
 
-          <Inspector el={selected} onChange={patchElement} onRemove={removeElement} />
+          <Inspector
+            el={selected}
+            onChange={patchElement}
+            onRemove={removeElement}
+            onClose={() => setSelectedId(null)}
+          />
         </main>
 
         <DragOverlay>

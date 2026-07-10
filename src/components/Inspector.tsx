@@ -52,10 +52,12 @@ export default function Inspector({
   el,
   onChange,
   onRemove,
+  onClose,
 }: {
   el: ElementInstance | null
   onChange: (id: string, patch: Partial<ElementConfig>) => void
   onRemove: (id: string) => void
+  onClose: () => void
 }) {
   const [picker, setPicker] = useState<PickerState>(null)
   const elId = el?.id
@@ -79,7 +81,10 @@ export default function Inspector({
     setPicker({ key, x: e.clientX, y: e.clientY })
 
   return (
-    <aside className="inspector" onClick={(e) => e.stopPropagation()}>
+    <aside className="inspector has-selection" onClick={(e) => e.stopPropagation()}>
+      <button className="inspector-close" onClick={onClose} title="close inspector">
+        done ✓
+      </button>
       <h2 className="panel-title">Inspector</h2>
       <p className="panel-sub">{def.label} — {def.hint}</p>
 
