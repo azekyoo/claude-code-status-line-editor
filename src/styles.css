@@ -737,6 +737,29 @@ input {
   letter-spacing: 0.06em;
 }
 
+@media (max-width: 640px) {
+  .preset-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .preset-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 14px 14px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+  }
+  .preset-card {
+    padding: 10px;
+  }
+  .preset-strip {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+}
+
 .preset-desc {
   color: var(--ink-dim);
   font-size: 11px;
