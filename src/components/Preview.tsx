@@ -68,6 +68,23 @@ function Segment({ el }: { el: ElementInstance }) {
   )
 }
 
+/** bare rendered status line rows — used by the terminal preview and preset cards */
+export function StatusRows({ rows, emptyHint }: { rows: ElementInstance[][]; emptyHint?: string }) {
+  return (
+    <div className="statusline">
+      {rows.map((row, i) => (
+        <div className="statusline-row" key={i}>
+          {row.length === 0 && emptyHint ? (
+            <span className="statusline-empty">{emptyHint}</span>
+          ) : (
+            row.map((el) => <Segment el={el} key={el.id} />)
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Preview({ rows }: { rows: ElementInstance[][] }) {
   return (
     <div className="terminal">
@@ -90,17 +107,7 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
           <span className="term-prompt">&gt;&nbsp;</span>
           <span className="term-caret" />
         </div>
-        <div className="statusline">
-          {rows.map((row, i) => (
-            <div className="statusline-row" key={i}>
-              {row.length === 0 ? (
-                <span className="statusline-empty">‹ empty line — drop elements here ›</span>
-              ) : (
-                row.map((el) => <Segment el={el} key={el.id} />)
-              )}
-            </div>
-          ))}
-        </div>
+        <StatusRows rows={rows} emptyHint="‹ empty line — drop elements here ›" />
       </div>
       <div className="terminal-scanlines" aria-hidden />
     </div>

@@ -20,6 +20,8 @@ import Preview from './components/Preview'
 import Inspector from './components/Inspector'
 import ExportPanel from './components/ExportPanel'
 import MockPanel from './components/MockPanel'
+import PresetGallery from './components/PresetGallery'
+import { PRESETS } from './presets'
 import { Row } from './components/Canvas'
 
 loadMock()
@@ -55,32 +57,7 @@ function loadRows(): ElementInstance[][] | null {
   }
 }
 
-function defaultRows(): ElementInstance[][] {
-  const sep = () => {
-    const s = makeInstance('sep')
-    s.config.prefix = ' '
-    s.config.suffix = ' '
-    return s
-  }
-  const bar = makeInstance('context-bar')
-  bar.config.barColorMode = 'gradient'
-  bar.config.barWidth = 12
-  const pct = makeInstance('context-pct')
-  pct.config.prefix = ' '
-  return [
-    [
-      makeInstance('model'),
-      sep(),
-      makeInstance('cwd-basename'),
-      makeInstance('git-branch'),
-      sep(),
-      bar,
-      pct,
-      sep(),
-      makeInstance('cost'),
-    ],
-  ]
-}
+const defaultRows = (): ElementInstance[][] => PRESETS[0].build()
 
 export default function App() {
   // a shared link's document takes precedence over the local autosave
@@ -91,6 +68,10 @@ export default function App() {
   const [dragging, setDragging] = useState<string | null>(null)
   // MOCK is a mutable singleton; bumping this re-renders the preview after edits
   const [, bumpMock] = useReducer((x: number) => x + 1, 0)
+  // open the gallery on a truly fresh visit (no saved design, no shared link)
+  const [showPresets, setShowPresets] = useState(
+    () => !location.hash && !localStorage.getItem(STORAGE_KEY),
+  )
 
   useEffect(() => {
     // the imported design becomes the working copy; drop the stale hash
@@ -307,6 +288,9 @@ export default function App() {
               <div className="canvas-head">
                 <h2 className="panel-title">Lines</h2>
                 <div className="canvas-actions">
+                  <button className="ghost-btn" onClick={() => setShowPresets(true)}>
+                    presets
+                  </button>
                   <button className="ghost-btn" onClick={undo} title="undo (Ctrl+Z)">
                     ↶
                   </button>
@@ -350,6 +334,17 @@ export default function App() {
           {dragLabel ? <div className="chip drag-overlay">{dragLabel}</div> : null}
         </DragOverlay>
       </DndContext>
+
+      {showPresets && (
+        <PresetGallery
+          onApply={(preset) => {
+            commit(preset)
+            setSelectedId(null)
+            setShowPresets(false)
+          }}
+          onClose={() => setShowPresets(false)}
+        />
+      )}
     </div>
   )
 }

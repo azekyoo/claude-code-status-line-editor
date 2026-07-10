@@ -673,6 +673,76 @@ input {
   background: rgba(224, 95, 95, 0.08);
 }
 
+/* ── preset gallery ─────────────────────── */
+.preset-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(5, 5, 8, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.preset-modal {
+  width: min(720px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 24px 60px -16px #000;
+}
+
+.preset-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.preset-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preset-card {
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.preset-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-raise);
+}
+
+.preset-strip {
+  background: #0a0a0d;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+.preset-name {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.preset-desc {
+  color: var(--ink-dim);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
 /* ── mock data panel ────────────────────── */
 .mock-body {
   border-top: 1px solid var(--border-soft);
