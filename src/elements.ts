@@ -34,12 +34,13 @@ const fmtUntil = (epoch: number) => {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** reset time as wall clock: HH:MM today, "Wed 20:30" on another day */
-const fmtResetClock = (epoch: number) => {
+/** reset time as wall clock; withDay adds "Wed " when it lands on another day
+ *  (only useful for the 7-day window — a 5h reset is at most hours away) */
+const fmtResetClock = (epoch: number, withDay: boolean) => {
   const d = new Date(epoch * 1000)
   const now = new Date()
   const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  return d.toDateString() === now.toDateString() ? hm : `${WEEKDAYS[d.getDay()]} ${hm}`
+  return !withDay || d.toDateString() === now.toDateString() ? hm : `${WEEKDAYS[d.getDay()]} ${hm}`
 }
 
 /** countdown-to-reset setup shared by the 5h/7d reset elements */
@@ -53,21 +54,26 @@ const resetSetup = (jqPath: string, v: string, t: string) => [
   `else ${v}=""; fi`,
 ]
 
-/** wall-clock variant: HH:MM if the reset lands today, "%a HH:MM" otherwise.
+/** wall-clock variant. withDay (7d window) prefixes "%a " when the reset
+ *  lands on another day; the 5h window always shows plain HH:MM.
  *  date -d @epoch is GNU, date -r epoch is BSD/macOS — try both. */
-const resetClockSetup = (jqPath: string, v: string, t: string) => [
+const resetClockSetup = (jqPath: string, v: string, t: string, withDay: boolean) => [
   `${t}=$(j '${jqPath} // 0 | floor')`,
   `if (( ${t} > 0 )); then`,
-  `  _rd=$(date -d "@\${${t}}" +%Y%m%d 2>/dev/null || date -r "\${${t}}" +%Y%m%d)`,
-  `  if [[ "$_rd" == "$(date +%Y%m%d)" ]]; then _rf="%H:%M"; else _rf="%a %H:%M"; fi`,
+  ...(withDay
+    ? [
+        `  _rd=$(date -d "@\${${t}}" +%Y%m%d 2>/dev/null || date -r "\${${t}}" +%Y%m%d)`,
+        `  if [[ "$_rd" == "$(date +%Y%m%d)" ]]; then _rf="%H:%M"; else _rf="%a %H:%M"; fi`,
+      ]
+    : [`  _rf="%H:%M"`]),
   `  ${v}=$(date -d "@\${${t}}" +"$_rf" 2>/dev/null || date -r "\${${t}}" +"$_rf")`,
   `else ${v}=""; fi`,
 ]
 
 /** shared emit for the two reset elements: extra selects countdown vs clock */
-const resetEmit = (jqPath: string, base: string) => (c: ElementConfig) =>
+const resetEmit = (jqPath: string, base: string, withDay: boolean) => (c: ElementConfig) =>
   c.extra === 'clock'
-    ? { setup: resetClockSetup(jqPath, `${base}_ck`, `_t${base}c`), value: `\${${base}_ck}` }
+    ? { setup: resetClockSetup(jqPath, `${base}_ck`, `_t${base}c`, withDay), value: `\${${base}_ck}` }
     : { setup: resetSetup(jqPath, `${base}_cd`, `_t${base}d`), value: `\${${base}_cd}` }
 
 export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
@@ -321,9 +327,9 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
     defaults: { color: 'bright-black', prefix: 'resets ', extra: 'countdown' },
     preview: (c) =>
       c.extra === 'clock'
-        ? fmtResetClock(MOCK.rate_limits.five_hour.resets_at)
+        ? fmtResetClock(MOCK.rate_limits.five_hour.resets_at, false)
         : fmtUntil(MOCK.rate_limits.five_hour.resets_at),
-    emit: resetEmit('.rate_limits.five_hour.resets_at', 'seg_r5rst'),
+    emit: resetEmit('.rate_limits.five_hour.resets_at', 'seg_r5rst', false),
   },
   'rate-7d-reset': {
     type: 'rate-7d-reset',
@@ -333,9 +339,9 @@ export const ELEMENT_DEFS: Record<ElementType, ElementDef> = {
     defaults: { color: 'bright-black', prefix: 'resets ', extra: 'countdown' },
     preview: (c) =>
       c.extra === 'clock'
-        ? fmtResetClock(MOCK.rate_limits.seven_day.resets_at)
+        ? fmtResetClock(MOCK.rate_limits.seven_day.resets_at, true)
         : fmtUntil(MOCK.rate_limits.seven_day.resets_at),
-    emit: resetEmit('.rate_limits.seven_day.resets_at', 'seg_r7rst'),
+    emit: resetEmit('.rate_limits.seven_day.resets_at', 'seg_r7rst', true),
   },
   time: {
     type: 'time',

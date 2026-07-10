@@ -80,7 +80,13 @@ export function saveMock() {
 export function loadMock() {
   try {
     const raw = localStorage.getItem(MOCK_KEY)
-    if (raw) deepMerge(MOCK, JSON.parse(raw))
+    if (!raw) return
+    const parsed = JSON.parse(raw)
+    // resets_at values are relative to load time — a saved epoch goes stale
+    // (and even lands in the past), so always keep the fresh defaults
+    delete parsed?.rate_limits?.five_hour?.resets_at
+    delete parsed?.rate_limits?.seven_day?.resets_at
+    deepMerge(MOCK, parsed)
   } catch {
     /* best-effort */
   }

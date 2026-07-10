@@ -175,7 +175,9 @@ export default function Inspector({
           </div>
           <span className="color-name">
             {el.config.extra === 'clock'
-              ? '20:30 today, "Wed 20:30" on another day'
+              ? el.type === 'rate-7d-reset'
+                ? '20:30 today, "Wed 20:30" on another day'
+                : 'reset time of day, e.g. 20:30'
               : 'remaining time, e.g. 2h 13m'}
           </span>
         </div>
