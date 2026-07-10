@@ -61,7 +61,9 @@ export function fromWire(wire: unknown): ElementInstance[][] | null {
         return { ...el, config: { ...el.config, ...((e as WireElement).c ?? {}) } }
       }),
   )
-  return rows.some((row) => row.length > 0) ? rows : null
+  // empty lines are a valid design (a deliberately blank status line) —
+  // only reject structurally invalid docs
+  return rows.length > 0 ? rows : null
 }
 
 export function encodeDoc(rows: ElementInstance[][]): string {

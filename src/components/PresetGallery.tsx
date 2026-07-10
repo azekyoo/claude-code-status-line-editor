@@ -20,7 +20,7 @@ function DesignCard({
     <div className="preset-card design-card">
       <button className="design-card-main" onClick={() => onApply(fromWire(design.wire)!)}>
         <div className="preset-strip">
-          <StatusRows rows={rows} />
+          <StatusRows rows={rows} emptyHint="‹ empty line ›" />
         </div>
         <div className="preset-name">{design.name}</div>
         <div className="preset-desc">saved {new Date(design.savedAt).toLocaleDateString()}</div>
