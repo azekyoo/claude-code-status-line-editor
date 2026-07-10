@@ -753,6 +753,51 @@ input {
   letter-spacing: 0.06em;
 }
 
+.preset-section-title {
+  margin: 14px 0 8px;
+}
+
+.design-save-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.design-save-row .field-input {
+  flex: 1;
+}
+
+.design-save-row .accent-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.design-card {
+  position: relative;
+  padding: 0;
+}
+
+.design-card-main {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+}
+
+.design-delete {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  color: var(--ink-faint);
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 5px;
+}
+
+.design-delete:hover {
+  color: var(--danger);
+}
+
 @media (max-width: 640px) {
   .preset-overlay {
     padding: 0;

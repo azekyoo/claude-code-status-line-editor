@@ -6,7 +6,7 @@ interface WireElement {
   t: ElementType
   c?: Partial<ElementConfig>
 }
-interface WireDoc {
+export interface WireDoc {
   v: 1
   r: WireElement[][]
 }
@@ -29,8 +29,8 @@ const b64urlDecode = (s: string): string => {
   return new TextDecoder().decode(bytes)
 }
 
-export function encodeDoc(rows: ElementInstance[][]): string {
-  const wire: WireDoc = {
+export function toWire(rows: ElementInstance[][]): WireDoc {
+  return {
     v: 1,
     r: rows.map((row) =>
       row.map((el) => {
@@ -46,24 +46,31 @@ export function encodeDoc(rows: ElementInstance[][]): string {
       }),
     ),
   }
-  return b64urlEncode(JSON.stringify(wire))
+}
+
+/** rebuild instances (fresh ids) from a wire doc; null if nothing valid */
+export function fromWire(wire: unknown): ElementInstance[][] | null {
+  if (!wire || typeof wire !== 'object' || (wire as WireDoc).v !== 1) return null
+  const r = (wire as WireDoc).r
+  if (!Array.isArray(r)) return null
+  const rows = r.map((row) =>
+    (Array.isArray(row) ? row : [])
+      .filter((e) => !!e && typeof e === 'object' && (e as WireElement).t in ELEMENT_DEFS)
+      .map((e) => {
+        const el = makeInstance((e as WireElement).t)
+        return { ...el, config: { ...el.config, ...((e as WireElement).c ?? {}) } }
+      }),
+  )
+  return rows.some((row) => row.length > 0) ? rows : null
+}
+
+export function encodeDoc(rows: ElementInstance[][]): string {
+  return b64urlEncode(JSON.stringify(toWire(rows)))
 }
 
 export function decodeDoc(payload: string): ElementInstance[][] | null {
   try {
-    const wire: unknown = JSON.parse(b64urlDecode(payload))
-    if (!wire || typeof wire !== 'object' || (wire as WireDoc).v !== 1) return null
-    const r = (wire as WireDoc).r
-    if (!Array.isArray(r)) return null
-    const rows = r.map((row) =>
-      (Array.isArray(row) ? row : [])
-        .filter((e) => !!e && typeof e === 'object' && (e as WireElement).t in ELEMENT_DEFS)
-        .map((e) => {
-          const el = makeInstance((e as WireElement).t)
-          return { ...el, config: { ...el.config, ...((e as WireElement).c ?? {}) } }
-        }),
-    )
-    return rows.some((row) => row.length > 0) ? rows : null
+    return fromWire(JSON.parse(b64urlDecode(payload)))
   } catch {
     return null
   }

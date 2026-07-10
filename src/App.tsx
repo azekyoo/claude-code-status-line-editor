@@ -337,6 +337,7 @@ export default function App() {
 
       {showPresets && (
         <PresetGallery
+          currentRows={rows}
           onApply={(preset) => {
             commit(preset)
             setSelectedId(null)
