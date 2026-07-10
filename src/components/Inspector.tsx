@@ -154,6 +154,33 @@ export default function Inspector({
         </div>
       )}
 
+      {(el.type === 'rate-5h-reset' || el.type === 'rate-7d-reset') && (
+        <div className="field">
+          <label className="field-label">Display</label>
+          <div className="field-inline">
+            <button
+              className={`toggle${el.config.extra !== 'clock' ? ' on' : ''}`}
+              onClick={() => set({ extra: 'countdown' })}
+              title="time remaining until reset"
+            >
+              countdown
+            </button>
+            <button
+              className={`toggle${el.config.extra === 'clock' ? ' on' : ''}`}
+              onClick={() => set({ extra: 'clock' })}
+              title="reset time of day"
+            >
+              clock
+            </button>
+          </div>
+          <span className="color-name">
+            {el.config.extra === 'clock'
+              ? '20:30 today, "Wed 20:30" on another day'
+              : 'remaining time, e.g. 2h 13m'}
+          </span>
+        </div>
+      )}
+
       {isBar && (
         <>
           <div className="field">

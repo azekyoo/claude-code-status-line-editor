@@ -77,14 +77,17 @@ const OPTIONAL_VAR: Partial<Record<ElementType, string>> = {
   'git-branch': 'seg_branch',
   'session-name': 'seg_sess',
   'vim-mode': 'seg_vim',
-  'rate-5h-reset': 'seg_r5rst',
-  'rate-7d-reset': 'seg_r7rst',
 }
 
 /** segment variable to guard on when the element may be empty at runtime */
 function optionalVar(el: ElementInstance): string | null {
   // repo-diff lines are empty outside repos and when the tree is clean
   if (el.type === 'lines-changed') return el.config.extra === 'session' ? null : 'seg_glines'
+  // reset elements pick their variable by display mode (countdown vs clock)
+  if (el.type === 'rate-5h-reset' || el.type === 'rate-7d-reset') {
+    const base = el.type === 'rate-5h-reset' ? 'seg_r5rst' : 'seg_r7rst'
+    return el.config.extra === 'clock' ? `${base}_ck` : `${base}_cd`
+  }
   return OPTIONAL_TYPES.has(el.type) ? (OPTIONAL_VAR[el.type] ?? null) : null
 }
 
