@@ -1,3 +1,11 @@
+/* tiny subset of Nerd Fonts symbols (powerline separators + prefix icons)
+   so the preview can render them; terminals still need a real Nerd Font */
+@font-face {
+  font-family: 'NF Symbols';
+  src: url('./assets/nf-symbols.woff2') format('woff2');
+  font-display: swap;
+}
+
 :root {
   --bg: #0c0c10;
   --bg-panel: #121218;
@@ -10,7 +18,7 @@
   --accent: #d9a854;
   --accent-ink: #16120a;
   --danger: #e05f5f;
-  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --mono: 'IBM Plex Mono', 'NF Symbols', ui-monospace, monospace;
   --serif: 'Instrument Serif', serif;
 }
 
@@ -658,6 +666,14 @@ input {
 .glyph-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.glyph-row + .glyph-row {
+  margin-top: 4px;
+}
+
+.glyph-btn.nerd {
+  border-style: dashed;
 }
 
 .danger-btn {

@@ -376,6 +376,16 @@ export function makeInstance(type: ElementType) {
 
 export const SEP_GLYPHS = ['│', '•', '·', '|', '❯', '»', '─', '◆', '⋮', ' ']
 
+/** powerline separators — require a Nerd Font (or powerline-patched font)
+ *  in the user's terminal; keep in sync with scripts/subset-nf.mjs */
+export const NERD_SEP_GLYPHS = ['', '', '', '', '', '', '', '']
+
+/** Nerd Font icons offered as prefix quick-picks (same font caveat) */
+export const PREFIX_ICONS = ['', '', '', '', '', '', '', '']
+
+/** true when a string contains private-use-area glyphs (Nerd Font icons) */
+export const hasNerdGlyphs = (s: string) => /[-]/.test(s)
+
 export const CATEGORIES: { key: ElementDef['category']; title: string }[] = [
   { key: 'session', title: 'Session' },
   { key: 'workspace', title: 'Workspace' },

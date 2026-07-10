@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { AnsiColor, ElementConfig, ElementInstance } from '../types'
-import { ELEMENT_DEFS, SEP_GLYPHS } from '../elements'
+import { ELEMENT_DEFS, NERD_SEP_GLYPHS, PREFIX_ICONS, SEP_GLYPHS } from '../elements'
 import { ANSI_HEX, ANSI_ORDER } from '../mock'
 import { BAR_COLOR_MODES, BAR_GLYPHS, BAR_STYLES, BAR_TYPES } from '../bar'
 import { NO_TEXT_GRADIENT } from '../exporter'
@@ -97,17 +97,32 @@ export default function Inspector({
             onChange={(e) => set({ extra: e.target.value })}
           />
           {el.type === 'sep' && (
-            <div className="glyph-row">
-              {SEP_GLYPHS.map((g) => (
-                <button
-                  key={g}
-                  className={`glyph-btn${el.config.extra === g ? ' active' : ''}`}
-                  onClick={() => set({ extra: g })}
-                >
-                  {g === ' ' ? '␣' : g}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="glyph-row">
+                {SEP_GLYPHS.map((g) => (
+                  <button
+                    key={g}
+                    className={`glyph-btn${el.config.extra === g ? ' active' : ''}`}
+                    onClick={() => set({ extra: g })}
+                  >
+                    {g === ' ' ? '␣' : g}
+                  </button>
+                ))}
+              </div>
+              <div className="glyph-row">
+                {NERD_SEP_GLYPHS.map((g) => (
+                  <button
+                    key={g}
+                    className={`glyph-btn nerd${el.config.extra === g ? ' active' : ''}`}
+                    onClick={() => set({ extra: g })}
+                    title="requires a Nerd Font in your terminal"
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+              <span className="color-name">bottom row needs a Nerd Font in your terminal</span>
+            </>
           )}
         </div>
       )}
@@ -290,6 +305,18 @@ export default function Inspector({
           placeholder="e.g.  or [ "
           onChange={(e) => set({ prefix: e.target.value })}
         />
+        <div className="glyph-row">
+          {PREFIX_ICONS.map((g) => (
+            <button
+              key={g}
+              className={`glyph-btn nerd${el.config.prefix === g + ' ' ? ' active' : ''}`}
+              onClick={() => set({ prefix: g + ' ' })}
+              title="Nerd Font icon — requires a Nerd Font in your terminal"
+            >
+              {g}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="field">
         <label className="field-label">Suffix</label>
