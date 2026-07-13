@@ -113,6 +113,31 @@ export const ANSI_HEX: Record<AnsiColor, string> = {
   'bright-white': '#f2efe6',
 }
 
+/** Approximate rendering of the same ANSI slots on a light-background terminal
+ *  (e.g. Terminal.app "Basic" light profile). Named colors get darkened for
+ *  legibility, but 'default'/'white'/'bright-white' are left as real terminals
+ *  render them — near-invisible on a light bg — so the toggle actually surfaces
+ *  color choices that break there. */
+export const ANSI_HEX_LIGHT: Record<AnsiColor, string> = {
+  default: '#24241f',
+  black: '#24241f',
+  red: '#a83030',
+  green: '#3f7d33',
+  yellow: '#8a6a1a',
+  blue: '#2f5fa8',
+  magenta: '#8a3f96',
+  cyan: '#1f7a72',
+  white: '#d6d2c8',
+  'bright-black': '#8a8a82',
+  'bright-red': '#c24545',
+  'bright-green': '#5a9a4a',
+  'bright-yellow': '#a5841f',
+  'bright-blue': '#4a78bf',
+  'bright-magenta': '#a558af',
+  'bright-cyan': '#3a948b',
+  'bright-white': '#f2efe6',
+}
+
 export const ANSI_FG_CODE: Record<AnsiColor, string> = {
   default: '',
   black: '30',
@@ -133,9 +158,10 @@ export const ANSI_FG_CODE: Record<AnsiColor, string> = {
   'bright-white': '97',
 }
 
-/** display hex for an element's configured color (ANSI or custom) */
-export const configHex = (c: ElementConfig): string =>
-  c.color === 'custom' ? c.customColor : c.color === 'gradient' ? c.barMid : ANSI_HEX[c.color]
+/** display hex for an element's configured color (ANSI or custom); pass
+ *  ANSI_HEX_LIGHT to preview against a light-background terminal instead */
+export const configHex = (c: ElementConfig, palette: Record<AnsiColor, string> = ANSI_HEX): string =>
+  c.color === 'custom' ? c.customColor : c.color === 'gradient' ? c.barMid : palette[c.color]
 
 /** grid display order (8×2 with the custom picker appended last): each normal
  *  color sits directly above its bright variant — default over bright-white,

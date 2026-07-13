@@ -347,6 +347,66 @@ input {
   mix-blend-mode: multiply;
 }
 
+.term-theme-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.term-theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+/* light-background terminal preview — approximates a light terminal profile
+ * (e.g. Terminal.app "Basic") so users can catch colors that vanish there */
+.terminal--light {
+  background: #f5f2ea;
+}
+
+.terminal--light .terminal-titlebar {
+  background: #ece7da;
+  border-bottom-color: #d8d2c2;
+}
+
+.terminal--light .tl-dot {
+  background: #d8d2c2;
+}
+
+.terminal--light .tl-dot:first-child {
+  background: #c99;
+}
+
+.terminal--light .terminal-title,
+.terminal--light .term-prompt {
+  color: #6b6656;
+}
+
+.terminal--light .term-msg-user {
+  color: #4a4638;
+}
+
+.terminal--light .term-msg-claude {
+  color: #24241f;
+}
+
+.terminal--light .term-inputbox {
+  border-color: #d8d2c2;
+}
+
+.terminal--light .term-caret {
+  background: #24241f;
+}
+
+.terminal--light .terminal-scanlines {
+  display: none;
+}
+
 /* ── canvas ─────────────────────────────── */
 .canvas {
   margin-top: 18px;

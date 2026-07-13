@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import type { ElementInstance } from '../types'
 import { ELEMENT_DEFS } from '../elements'
-import { ANSI_HEX, configHex, MOCK } from '../mock'
+import { ANSI_HEX, ANSI_HEX_LIGHT, configHex, MOCK } from '../mock'
 import { BAR_TYPES, barCells, gradientRgb } from '../bar'
 import { NO_TEXT_GRADIENT } from '../exporter'
+
+type TermTheme = 'dark' | 'light'
 
 // read at render time so mock data edits show live
 const barMockPct = (type: string): number =>
@@ -12,10 +15,11 @@ const barMockPct = (type: string): number =>
       ? MOCK.rate_limits.five_hour.used_percentage
       : MOCK.rate_limits.seven_day.used_percentage
 
-function Segment({ el }: { el: ElementInstance }) {
+function Segment({ el, theme = 'dark' }: { el: ElementInstance; theme?: TermTheme }) {
   const def = ELEMENT_DEFS[el.type]
+  const palette = theme === 'light' ? ANSI_HEX_LIGHT : ANSI_HEX
   const style: React.CSSProperties = {
-    color: configHex(el.config),
+    color: configHex(el.config, palette),
     fontWeight: el.config.bold ? 700 : 400,
     opacity: el.config.dim ? 0.55 : 1,
   }
@@ -37,8 +41,8 @@ function Segment({ el }: { el: ElementInstance }) {
     return (
       <span style={{ opacity: el.config.dim ? 0.55 : 1 }}>
         {el.config.prefix}
-        <span style={{ color: ANSI_HEX.green }}>+{MOCK.cost.total_lines_added}</span>{' '}
-        <span style={{ color: ANSI_HEX.red }}>-{MOCK.cost.total_lines_removed}</span>
+        <span style={{ color: palette.green }}>+{MOCK.cost.total_lines_added}</span>{' '}
+        <span style={{ color: palette.red }}>-{MOCK.cost.total_lines_removed}</span>
         {el.config.suffix}
       </span>
     )
@@ -69,7 +73,15 @@ function Segment({ el }: { el: ElementInstance }) {
 }
 
 /** bare rendered status line rows — used by the terminal preview and preset cards */
-export function StatusRows({ rows, emptyHint }: { rows: ElementInstance[][]; emptyHint?: string }) {
+export function StatusRows({
+  rows,
+  emptyHint,
+  theme,
+}: {
+  rows: ElementInstance[][]
+  emptyHint?: string
+  theme?: TermTheme
+}) {
   return (
     <div className="statusline">
       {rows.map((row, i) => (
@@ -77,7 +89,7 @@ export function StatusRows({ rows, emptyHint }: { rows: ElementInstance[][]; emp
           {row.length === 0 && emptyHint ? (
             <span className="statusline-empty">{emptyHint}</span>
           ) : (
-            row.map((el) => <Segment el={el} key={el.id} />)
+            row.map((el) => <Segment el={el} theme={theme} key={el.id} />)
           )}
         </div>
       ))}
@@ -86,8 +98,9 @@ export function StatusRows({ rows, emptyHint }: { rows: ElementInstance[][]; emp
 }
 
 export default function Preview({ rows }: { rows: ElementInstance[][] }) {
+  const [theme, setTheme] = useState<TermTheme>('dark')
   return (
-    <div className="terminal">
+    <div className={`terminal${theme === 'light' ? ' terminal--light' : ''}`}>
       <div className="terminal-titlebar">
         <span className="tl-dot" />
         <span className="tl-dot" />
@@ -95,6 +108,13 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
         <span className="terminal-title">
           dev@local: {MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~')}
         </span>
+        <button
+          className="term-theme-toggle"
+          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          title="Preview against a light-background terminal (checks colors don't vanish there)"
+        >
+          {theme === 'dark' ? '☾ dark' : '☼ light'}
+        </button>
       </div>
       <div className="terminal-body">
         <div className="term-history">
@@ -107,7 +127,7 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
           <span className="term-prompt">&gt;&nbsp;</span>
           <span className="term-caret" />
         </div>
-        <StatusRows rows={rows} emptyHint="‹ empty line — drop elements here ›" />
+        <StatusRows rows={rows} emptyHint="‹ empty line — drop elements here ›" theme={theme} />
       </div>
       <div className="terminal-scanlines" aria-hidden />
     </div>
