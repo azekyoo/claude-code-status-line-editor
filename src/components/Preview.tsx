@@ -109,7 +109,7 @@ export default function Preview({ rows }: { rows: ElementInstance[][] }) {
           dev@local: {MOCK.workspace.current_dir.replace(/^\/(home|Users)\/[^/]+/, '~')}
         </span>
         <button
-          className="term-theme-toggle"
+          className="ghost-btn term-theme-toggle"
           onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
           title="Preview against a light-background terminal (checks colors don't vanish there)"
         >

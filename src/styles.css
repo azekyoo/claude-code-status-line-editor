@@ -349,18 +349,8 @@ input {
 
 .term-theme-toggle {
   margin-left: auto;
-  background: transparent;
-  border: 1px solid var(--border-soft);
-  border-radius: 5px;
   padding: 2px 8px;
   font-size: 11px;
-  color: var(--ink-faint);
-  cursor: pointer;
-}
-
-.term-theme-toggle:hover {
-  color: var(--ink);
-  border-color: var(--border);
 }
 
 /* light-background terminal preview — approximates a light terminal profile
